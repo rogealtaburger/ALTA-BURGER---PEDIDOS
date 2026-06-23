@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alta Burger - Pedidos Online</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#E8A500">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/jqi35ZA.png">
+
     <style>
         * {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif;}
         :root {--dorado:#E8A500; --dorado-claro:#F2BD3A; --oscuro:#121212; --gris:#1e1e1e; --gris-claro:#333; --blanco:#fff; --texto:#e0e0e0;}
@@ -350,6 +356,13 @@
                     <option value="Para llevar">Para llevar</option>
                 </select>
 
+                <label>Método de pago *</label>
+                <select id="cli_pago" required>
+                    <option value="">Elegir...</option>
+                    <option value="Efectivo en el local">Efectivo en el local</option>
+                    <option value="Transferencia">Transferencia Bancaria / MercadoPago</option>
+                </select>
+
                 <label>Observaciones generales del pedido</label>
                 <textarea id="cli_observaciones" rows="2" placeholder="Ej: Sin cebolla, o pasaré a buscar a las 21hs..."></textarea>
 
@@ -359,8 +372,19 @@
 
         <div id="mensajeExito" class="mensaje-exito">
             <h2 style="color:#4cd964; margin-bottom:1rem;">¡Pedido enviado correctamente!</h2>
+            
+            <div id="seccionTransferencia" style="display:none; background:#222; padding:15px; border-radius:8px; margin-bottom:1rem; border:1px solid #E8A500;">
+                <h3 style="color:#E8A500; margin-bottom:10px;">💳 Pago por Transferencia</h3>
+                <p style="margin-bottom:5px;">Por favor, transferí el total de <strong>$<span id="totalTransferencia"></span></strong> al siguiente Alias/CBU:</p>
+                <div style="background:#111; padding:10px; font-size:1.2rem; text-align:center; letter-spacing:1px; margin-bottom:10px; border-radius:5px; border:1px dashed #666;">
+                    <strong id="aliasCBU">Cargando...</strong>
+                </div>
+                <p style="font-size:0.9rem; color:#aaa; margin-bottom:15px;">(Una vez enviado el pedido, te recomendamos mandar el comprobante por WhatsApp para acelerar la preparación)</p>
+                <button type="button" onclick="enviarComprobanteWP()" class="boton-pedir" style="background:#25D366; color:#000;">📲 ENVIAR COMPROBANTE POR WHATSAPP</button>
+            </div>
+
             <p style="color:#fff; font-weight:normal; margin-bottom:1rem;">En breve lo preparamos. Se descargó tu ticket de comprobante.</p>
-            <button type="button" onclick="cerrarModal()" class="boton-pedir" style="max-width:200px;">Cerrar</button>
+            <button type="button" onclick="cerrarModal()" class="boton-pedir" style="max-width:200px;">Cerrar Pantalla</button>
         </div>
     </div>
 </div>
@@ -369,7 +393,27 @@
     Desarrollador: Sistema VICUS
 </footer>
 
+<!-- PWA Service Worker Registration -->
 <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(registration => {
+        console.log('SW registrado exitosamente con scope: ', registration.scope);
+      }).catch(err => {
+        console.log('Fallo al registrar el SW: ', err);
+      });
+    });
+  }
+</script>
+
+<script>
+// --- CONFIGURACIÓN DE WHATSAPP ---
+const WHATSAPP_NUMERO = "5492996908502";
+const ALIAS_CUENTA = "alta.burger.mp"; // ACÁ PONDREMOS EL ALIAS REAL
+let ultimoIdPedido = "";
+let ultimoTotalPedido = 0;
+let ultimoNombreCliente = "";
+
 // Base de datos de precios
 const precios = {
     "Messias Burger": {M: 21000, XL: 26500},
@@ -528,6 +572,24 @@ function descargarTicket(orderId, obs) {
 const scriptURL = "https://script.google.com/macros/s/AKfycbzCr8DssB5pImOCTnwJ0NzjqjuTPw-LSHDjKnOGeXTmvgfzFACF0SjM2XveF7hcoA9D/exec";
 const form = document.getElementById('formPedido');
 
+// --- SISTEMA DE INVENTARIO AUTOMÁTICO ---
+window.addEventListener('load', () => {
+    fetch(scriptURL)
+    .then(res => res.json())
+    .then(data => {
+        if(data.estado === "OK" && data.productosAgotados) {
+            const select = document.getElementById('prod_nombre');
+            for (let i = 0; i < select.options.length; i++) {
+                if (data.productosAgotados.includes(select.options[i].value)) {
+                    select.options[i].disabled = true;
+                    select.options[i].text += " ❌ (AGOTADO)";
+                }
+            }
+        }
+    })
+    .catch(err => console.log("Inventario no sincronizado o sin conexión:", err));
+});
+
 form.addEventListener('submit', e => {
     e.preventDefault();
     if(carrito.length === 0) return;
@@ -553,8 +615,14 @@ form.addEventListener('submit', e => {
     formData.append('agregados', 'Ver producto');
     
     const obsOriginal = document.getElementById('cli_observaciones').value;
-    const obsFinal = `[PEDIDO: ${orderId}] [TOTAL: $${totalPedido.toLocaleString('es-AR')}] -- Obs: ${obsOriginal}`;
+    const metodoPago = document.getElementById('cli_pago').value;
+    const obsFinal = `[PEDIDO: ${orderId}] [PAGO: ${metodoPago}] [TOTAL: $${totalPedido.toLocaleString('es-AR')}] -- Obs: ${obsOriginal}`;
     formData.append('observaciones', obsFinal);
+
+    // Guardar para el WhatsApp
+    ultimoIdPedido = orderId;
+    ultimoTotalPedido = totalPedido.toLocaleString('es-AR');
+    ultimoNombreCliente = document.getElementById('cli_nombre').value;
 
     // UX: botón cargando
     const btn = document.getElementById('btnConfirmar');
@@ -569,6 +637,15 @@ form.addEventListener('submit', e => {
         document.getElementById('pantallaCarrito').style.display = 'none';
         document.getElementById('mensajeExito').style.display = 'block';
         
+        // Mostrar sección de transferencia si eligió ese método
+        if (metodoPago === 'Transferencia') {
+            document.getElementById('seccionTransferencia').style.display = 'block';
+            document.getElementById('totalTransferencia').innerText = ultimoTotalPedido;
+            document.getElementById('aliasCBU').innerText = ALIAS_CUENTA;
+        } else {
+            document.getElementById('seccionTransferencia').style.display = 'none';
+        }
+        
         // Reset para el próximo pedido
         form.reset();
         carrito = [];
@@ -581,6 +658,13 @@ form.addEventListener('submit', e => {
         btn.disabled = false;
     });
 });
+
+// Función para mandar WhatsApp
+function enviarComprobanteWP() {
+    const mensaje = `Hola! Soy ${ultimoNombreCliente}, te envío el comprobante de pago de mi pedido ${ultimoIdPedido} por el total de $${ultimoTotalPedido}.`;
+    const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+}
 </script>
 
 </body>
