@@ -6,32 +6,37 @@
     <title>Alta Burger - Pedidos Online</title>
     <style>
         * {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Roboto, sans-serif;}
-        :root {--amarillo:#ffc107; --oscuro:#121212; --gris:#1e1e1e; --gris-claro:#333; --blanco:#fff; --texto:#e0e0e0;}
+        :root {--dorado:#E8A500; --dorado-claro:#F2BD3A; --oscuro:#121212; --gris:#1e1e1e; --gris-claro:#333; --blanco:#fff; --texto:#e0e0e0;}
         body {background:var(--oscuro); color:var(--texto); line-height:1.6;}
-        header {background:linear-gradient(135deg, var(--amarillo), #ff9800); color:#000; padding:2rem 1rem; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.3);}
+        header {background:linear-gradient(135deg, var(--dorado), #C48800); color:#000; padding:2rem 1rem; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.3);}
         .logo {max-width:140px; margin:0 auto 1rem;}
         .logo img {width:100%; height:auto;}
         header h1 {font-size:2.2rem; margin-bottom:0.5rem;}
         .contenedor {max-width:1200px; margin:0 auto; padding:2rem 1rem;}
         section {margin-bottom:3rem;}
-        h2 {color:var(--amarillo); font-size:1.8rem; margin-bottom:1.5rem; padding-bottom:0.5rem; border-bottom:2px solid var(--gris-claro);}
+        h2 {color:var(--dorado); font-size:1.8rem; margin-bottom:1.5rem; padding-bottom:0.5rem; border-bottom:2px solid var(--gris-claro);}
         .grid-menu {display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:1.5rem;}
-        .tarjeta {background:var(--gris); border-radius:12px; padding:1.5rem; border-left:5px solid var(--amarillo); transition:transform 0.2s;}
+        .tarjeta {background:var(--gris); border-radius:12px; padding:1.5rem; border-left:5px solid var(--dorado); transition:transform 0.2s;}
         .tarjeta:hover {transform:translateY(-5px);}
-        .tarjeta h3 {color:var(--amarillo); margin-bottom:0.8rem; font-size:1.3rem;}
-        .precios {margin:1rem 0; font-weight:bold;}
+        .tarjeta h3 {color:var(--dorado); margin-bottom:0.8rem; font-size:1.3rem;}
+        .tarjeta .descripcion {color:#bbb; font-size:0.95rem; margin-bottom:0.8rem;}
+        .precios {margin:0.5rem 0; font-weight:bold;}
         .precio-m {color:#4cd964; margin-right:1rem;}
         .precio-xl {color:#fdba74;}
-        .boton-pedir {background:var(--amarillo); color:#000; padding:0.9rem 2rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:1.1rem; border:none; cursor:pointer; width:100%; transition:background 0.2s;}
-        .boton-pedir:hover {background:#ffda6b;}
+        .precio-nota {color:#aaa; font-size:0.85rem; font-style:italic; margin-top:0.3rem;}
+        .tag-especial {display:inline-block; background:var(--dorado); color:#000; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-left:0.5rem; vertical-align:middle;}
+        .boton-pedir {background:var(--dorado); color:#000; padding:0.9rem 2rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:1.1rem; border:none; cursor:pointer; width:100%; transition:background 0.2s;}
+        .boton-pedir:hover {background:var(--dorado-claro);}
         .info-adicional {background:var(--gris); padding:1.5rem; border-radius:12px; margin-top:2rem;}
+        .nota-veggie {background:var(--gris); border:2px dashed var(--dorado); border-radius:12px; padding:1.5rem; text-align:center; margin-top:1rem;}
+        .nota-veggie h3 {color:var(--dorado); margin-bottom:0.5rem;}
 
         /* --- ESTILOS DEL MODAL (VENTANA EMERGENTE) --- */
         .modal {display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; overflow:auto; background:rgba(0,0,0,0.8);}
-        .modal-contenido {background:var(--gris); margin:5% auto; padding:2rem; border:2px solid var(--amarillo); border-radius:12px; width:95%; max-width:600px; position:relative; animation:aparecer 0.3s;}
+        .modal-contenido {background:var(--gris); margin:5% auto; padding:2rem; border:2px solid var(--dorado); border-radius:12px; width:95%; max-width:600px; position:relative; animation:aparecer 0.3s;}
         @keyframes aparecer {from{transform:scale(0.9); opacity:0;} to{transform:scale(1); opacity:1;}}
         .cerrar {color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer;}
-        .cerrar:hover {color:var(--amarillo);}
+        .cerrar:hover {color:var(--dorado);}
         form label {display:block; margin:1rem 0 0.4rem; font-weight:500;}
         form input, form select, form textarea {width:100%; padding:0.7rem; border:1px solid var(--gris-claro); border-radius:6px; background:#2a2a2a; color:var(--blanco); font-size:1rem;}
         .mensaje-exito {display:none; color:#4cd964; text-align:center; padding:1rem; font-weight:bold;}
@@ -41,34 +46,199 @@
 
 <header>
     <div class="logo"><img src="logo-alta-burger.png" alt="Logo Alta Burger"></div>
-    <h1>🍔 ALTA BURGER</h1>
+    <h1>ALTA BURGER</h1>
     <p>Las mejores hamburguesas de Neuquén</p>
     <p>Para comer en el local | Para llevar</p>
 </header>
 
 <div class="contenedor">
-    <!-- TU MENÚ COMPLETO AQUÍ -->
+
+    <!-- ========== HAMBURGUESAS ========== -->
     <section>
-        <h2>🍔 Nuestras Hamburguesas</h2>
+        <h2>Nuestras Hamburguesas</h2>
+        <p style="margin-bottom:1.5rem; color:#aaa;">Todas incluyen papas 🍟 | Precios con x1 medallón</p>
         <div class="grid-menu">
+
             <div class="tarjeta">
                 <h3>Messias Burger</h3>
-                <p>Pan de batata, lechuga, tomate, cebolla, cheddar, bacon, salsa ahumada</p>
+                <p class="descripcion">Pan de batata, lechuga, tomate, cebolla en cubos, cheddar, bacon y salsa messias (ahumada)</p>
                 <div class="precios"><span class="precio-m">M: $21.000</span><span class="precio-xl">XL: $26.500</span></div>
             </div>
-            <!-- ... resto de tarjetas igual que antes ... -->
+
+            <div class="tarjeta">
+                <h3>Messias Spicy 🌶️</h3>
+                <p class="descripcion">Pan de batata, lechuga, tomate, cebolla en cubos, cheddar, cubos y salsa spicy (picante y ahumada)</p>
+                <div class="precios"><span class="precio-m">M: $21.000</span><span class="precio-xl">XL: $26.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Palta Burger</h3>
+                <p class="descripcion">Pan de batata, palta, criolla, cheddar, lechuga y tomate</p>
+                <div class="precios"><span class="precio-m">M: $22.000</span><span class="precio-xl">XL: $27.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Big Burger</h3>
+                <p class="descripcion">Pan de batata, cheddar, lechuga, cebolla en cubos, pepinillos y salsa big</p>
+                <div class="precios"><span class="precio-m">M: $21.500</span><span class="precio-xl">XL: $27.500</span></div>
+                <p class="precio-nota">* Precio base con x2 medallones</p>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Special Burger</h3>
+                <p class="descripcion">Pan de batata, mayo, ketchup, cebolla confitada, lechuga, tomate, huevo, muzza y bacon</p>
+                <div class="precios"><span class="precio-m">M: $20.000</span><span class="precio-xl">XL: $25.000</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Classic Burger</h3>
+                <p class="descripcion">Pan de batata, mayo, lechuga, tomate, huevo, jamón y muzza</p>
+                <div class="precios"><span class="precio-m">M: $20.000</span><span class="precio-xl">XL: $25.000</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Provolona</h3>
+                <p class="descripcion">Pan de batata, mayo liviana, salsa criolla asada, queso provolone, lechuga y tomate</p>
+                <div class="precios"><span class="precio-m">M: $22.500</span><span class="precio-xl">XL: $27.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Capresse Burger</h3>
+                <p class="descripcion">Pan de batata, mayo de albahaca, tomate, huevo y queso de pesto</p>
+                <div class="precios"><span class="precio-m">M: $20.500</span><span class="precio-xl">XL: $25.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Spring Burger</h3>
+                <p class="descripcion">Pan de batata, mayo, cebolla en cubos, lechuga y tomate</p>
+                <div class="precios"><span class="precio-m">M: $18.500</span><span class="precio-xl">XL: $24.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Cheese Burger</h3>
+                <p class="descripcion">Pan de batata, mayo, ketchup y cheddar</p>
+                <div class="precios"><span class="precio-m">M: $18.000</span><span class="precio-xl">XL: $24.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>American Burger</h3>
+                <p class="descripcion">Pan de batata, mayo, ketchup, cebolla confitada, pepinillo, cheddar y bacon</p>
+                <div class="precios"><span class="precio-m">M: $20.000</span><span class="precio-xl">XL: $25.000</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Súper Bacon</h3>
+                <p class="descripcion">Pan de batata, ketchup, mostaza, cebolla en cubos, cheddar y mucho bacon</p>
+                <div class="precios"><span class="precio-m">M: $21.500</span><span class="precio-xl">XL: $27.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Smoke Barbecue</h3>
+                <p class="descripcion">Pan de batata, cebolla en cubos, barbacoa ahumada, cheddar y bacon</p>
+                <div class="precios"><span class="precio-m">M: $20.000</span><span class="precio-xl">XL: $25.000</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Irresistible Cheese</h3>
+                <p class="descripcion">Pan de batata, bacon, cheddar en crema y en fetas</p>
+                <div class="precios"><span class="precio-m">M: $20.000</span><span class="precio-xl">XL: $25.000</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Oh My Cuarto!</h3>
+                <p class="descripcion">Pan de batata, ketchup, mostaza, cebolla en cubos y cheddar</p>
+                <div class="precios"><span class="precio-m">M: $21.500</span><span class="precio-xl">XL: $27.500</span></div>
+                <p class="precio-nota">* Precio base con x2 medallones</p>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Alta Burger <span class="tag-especial">⭐ ESPECIAL</span></h3>
+                <p class="descripcion">Pan de batata, mayo, ketchup, cebolla confitada, pepinillos, cheddar y bacon. Bañada en cheddar y bacon. Incluye bebida</p>
+                <div class="precios"><span class="precio-m">M: $27.500</span><span class="precio-xl">XL: $33.500</span></div>
+            </div>
+
+            <div class="tarjeta">
+                <h3>Menú Infantil <span class="tag-especial">👦 KIDS</span></h3>
+                <p class="descripcion">Pan de batata, mayo, lechuga, tomate y cheddar. Incluye bebida</p>
+                <div class="precios"><span class="precio-m">M: $19.500</span></div>
+            </div>
+
+        </div>
+
+        <!-- Opción Veggie -->
+        <div class="nota-veggie">
+            <h3>🌱 Hacé tu Burger Veggie</h3>
+            <p>Elegí tu burger y consultá los medallones veggie disponibles</p>
+        </div>
+    </section>
+
+    <!-- ========== PAPAS ========== -->
+    <section>
+        <h2>🍟 Papas</h2>
+        <div class="grid-menu">
+            <div class="tarjeta">
+                <h3>Papas Extras</h3>
+                <div class="precios"><span class="precio-m">$6.000</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Papas Solas Grandes</h3>
+                <div class="precios"><span class="precio-m">$14.000</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Papas con Huevo Grandes</h3>
+                <div class="precios"><span class="precio-m">$18.000</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Papas con Cheddar y Bacon Grandes</h3>
+                <div class="precios"><span class="precio-m">$22.000</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Papas con Crema, Verdeo y Jamón Cocido</h3>
+                <div class="precios"><span class="precio-m">$18.000</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Papas con Queso Azul, Verdeo y Jamón Cocido</h3>
+                <div class="precios"><span class="precio-m">$18.000</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== COMBOS ========== -->
+    <section>
+        <h2>🎉 Combos</h2>
+        <div class="grid-menu">
+            <div class="tarjeta">
+                <h3>Combo para 2</h3>
+                <p class="descripcion">2 American Burger dobles + papas + bebidas</p>
+                <div class="precios"><span class="precio-m">M: $49.900</span><span class="precio-xl">XL: $60.000</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Combo para 3</h3>
+                <p class="descripcion">3 Oh My Cuarto! + papas + bebidas</p>
+                <div class="precios"><span class="precio-m">M: $69.500</span><span class="precio-xl">XL: $87.500</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Combo para 4</h3>
+                <p class="descripcion">4 American Burger + papas + bebidas</p>
+                <div class="precios"><span class="precio-m">M: $84.500</span><span class="precio-xl">XL: $105.000</span></div>
+            </div>
         </div>
     </section>
 
     <!-- BOTÓN QUE ABRE EL FORMULARIO -->
     <section style="text-align:center;">
         <h2>¿Listo para pedir?</h2>
-        <p style="margin-bottom:1.5rem;">Todas incluyen papas ✅</p>
+        <p style="margin-bottom:1.5rem;">Todas las burgers incluyen papas ✅</p>
         <button class="boton-pedir" onclick="abrirModal()">📝 HACER MI PEDIDO AHORA</button>
 
-        <div class="info-adicional">
-            <h3>📍 Contacto</h3>
-            <p>Tel: +54 9 299 690-8502 | Mail: rogealtaburger@gmail.com</p>
+        <div class="info-adicional" style="text-align:center;">
+            <h3 style="margin-bottom:1rem;">📍 Encontranos en</h3>
+            <p><strong>Dirección:</strong> <a href="https://www.google.com/maps/place/alta+burger+neuquen/data=!4m2!3m1!1s0x960a332209982851:0x4da7663b8ba40ed7?sa=X&ved=1t:242&ictx=111" target="_blank" style="color:var(--dorado); text-decoration:none;">Pudú 1500, Neuquén</a></p>
+            <p style="margin-top:0.5rem;"><strong>Tel:</strong> +54 9 299 690-8502 | <strong>Mail:</strong> rogealtaburger@gmail.com</p>
+            <div style="margin-top:1rem; font-size:1.2rem;">
+                <a href="https://www.instagram.com/altaburger.nqn/" target="_blank" style="color:var(--dorado); text-decoration:none; margin:0 10px;">📸 Instagram</a>
+                <a href="https://www.facebook.com/altaburger.nqn/" target="_blank" style="color:var(--dorado); text-decoration:none; margin:0 10px;">📘 Facebook</a>
+            </div>
         </div>
     </section>
 </div>
@@ -96,26 +266,32 @@
             <label>Producto principal *</label>
             <select name="producto" required>
                 <option value="">Elegir hamburguesa / combo...</option>
-                <option>Messias Burger</option>
-                <option>Messias Spicy</option>
-                <option>Palta Burger</option>
-                <option>Big Burger</option>
-                <option>Special Burger</option>
-                <option>Classic Burger</option>
-                <option>Provolona</option>
-                <option>Capresse Burger</option>
-                <option>Spring Burger</option>
-                <option>Cheese Burger</option>
-                <option>American Burger</option>
-                <option>Súper Bacon</option>
-                <option>Smoke Barbecue</option>
-                <option>Irresistible Cheese</option>
-                <option>Oh Mi Cuarto!</option>
-                <option>Alta Burger</option>
-                <option>Menú Infantil</option>
-                <option>Combo para 2</option>
-                <option>Combo para 3</option>
-                <option>Combo para 4</option>
+                <optgroup label="Hamburguesas">
+                    <option>Messias Burger</option>
+                    <option>Messias Spicy</option>
+                    <option>Palta Burger</option>
+                    <option>Big Burger</option>
+                    <option>Special Burger</option>
+                    <option>Classic Burger</option>
+                    <option>Provolona</option>
+                    <option>Capresse Burger</option>
+                    <option>Spring Burger</option>
+                    <option>Cheese Burger</option>
+                    <option>American Burger</option>
+                    <option>Súper Bacon</option>
+                    <option>Smoke Barbecue</option>
+                    <option>Irresistible Cheese</option>
+                    <option>Oh My Cuarto!</option>
+                    <option>Alta Burger</option>
+                </optgroup>
+                <optgroup label="Menú Infantil">
+                    <option>Menú Infantil</option>
+                </optgroup>
+                <optgroup label="Combos">
+                    <option>Combo para 2</option>
+                    <option>Combo para 3</option>
+                    <option>Combo para 4</option>
+                </optgroup>
             </select>
 
             <label>Tamaño *</label>
@@ -136,7 +312,10 @@
                 <option>Ninguno</option>
                 <option>Papas Extras $6.000</option>
                 <option>Papas Solas Grandes $14.000</option>
-                <option>Papas con Cheddar y Bacon $22.000</option>
+                <option>Papas con Huevo Grandes $18.000</option>
+                <option>Papas con Cheddar y Bacon Grandes $22.000</option>
+                <option>Papas con Crema, Verdeo y Jamón Cocido $18.000</option>
+                <option>Papas con Queso Azul, Verdeo y Jamón Cocido $18.000</option>
                 <option>Cambiar por medallón Veggie</option>
             </select>
 
