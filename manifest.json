@@ -1,0 +1,21 @@
+{
+  "name": "Alta Burger",
+  "short_name": "Alta Burger",
+  "start_url": "./ALTA%20-%20BURGER%20---%20Pedidos.html",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#E8A500",
+  "description": "Pedí las mejores hamburguesas de Neuquén",
+  "icons": [
+    {
+      "src": "https://i.imgur.com/jqi35ZA.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.imgur.com/jqi35ZA.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
