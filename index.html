@@ -316,6 +316,9 @@
                     <option value="Cambiar por medallón Veggie">Cambiar por medallón Veggie</option>
                 </select>
 
+                <label>Aclaraciones (Opcional)</label>
+                <input type="text" id="prod_aclaraciones" placeholder="Ej: Sin mayonesa, sin ketchup..." style="margin-bottom:0.5rem;">
+
                 <button type="button" onclick="agregarAlCarrito()" style="background:#4cd964; color:#000; padding:0.7rem; border-radius:6px; font-weight:bold; width:100%; border:none; cursor:pointer; margin-top:1rem;">➕ AGREGAR AL CARRITO</button>
             </div>
 
@@ -421,6 +424,7 @@ function agregarAlCarrito() {
     const tamano = document.getElementById('prod_tamano').value;
     const medallones = document.getElementById('prod_medallones').value;
     const extra = document.getElementById('prod_agregados').value;
+    const aclara = document.getElementById('prod_aclaraciones').value.trim();
 
     let precioBase = precios[nombre] ? precios[nombre][tamano] : 0;
     if(!precioBase) { alert("⚠️ El tamaño " + tamano + " no está disponible para " + nombre); return; }
@@ -428,11 +432,12 @@ function agregarAlCarrito() {
     let precioExtra = preciosExtras[extra] || 0;
     let subtotal = precioBase + precioExtra;
 
-    carrito.push({ nombre, tamano, medallones, extra, subtotal });
+    carrito.push({ nombre, tamano, medallones, extra, aclara, subtotal });
     
     // Limpiar selects (opcional, dejamos el producto por si quiere otra igual)
     document.getElementById('prod_agregados').value = "Ninguno";
     document.getElementById('prod_medallones').value = "1";
+    document.getElementById('prod_aclaraciones').value = "";
     
     actualizarCarrito();
 }
@@ -463,6 +468,7 @@ function actualizarCarrito() {
         totalPedido += item.subtotal;
         let txt = `<strong style="color:var(--blanco)">${item.nombre}</strong> (${item.tamano}) - x${item.medallones} med.`;
         if(item.extra !== "Ninguno") txt += `<br><small style="color:#fdba74">+ ${item.extra}</small>`;
+        if(item.aclara) txt += `<br><small style="color:#aaa; font-style:italic;">* Aclaración: ${item.aclara}</small>`;
         
         const li = document.createElement('li');
         li.style.borderBottom = "1px solid #333";
@@ -498,6 +504,7 @@ function descargarTicket(orderId, obs) {
     carrito.forEach(i => {
         ticket += `- ${i.nombre} (${i.tamano}) x${i.medallones} med.\n`;
         if (i.extra !== 'Ninguno') ticket += `  Extra: ${i.extra}\n`;
+        if (i.aclara) ticket += `  Aclaración: ${i.aclara}\n`;
         ticket += `  Subtotal: $${i.subtotal.toLocaleString('es-AR')}\n\n`;
     });
     ticket += `---------------------------------\n`;
@@ -529,7 +536,11 @@ form.addEventListener('submit', e => {
     const orderId = "#AB-" + Math.floor(1000 + Math.random() * 9000);
 
     // Combinar productos en un solo texto para que entre en la misma columna de Sheets
-    const descripciones = carrito.map(i => `[${i.nombre} | ${i.tamano} | ${i.medallones}med | ${i.extra}]`).join(' + ');
+    const descripciones = carrito.map(i => {
+        let det = `[${i.nombre} | ${i.tamano} | ${i.medallones}med | ${i.extra}]`;
+        if (i.aclara) det += ` (Aclaración: ${i.aclara})`;
+        return det;
+    }).join(' + ');
 
     // Datos originales + nuevas combinaciones
     const formData = new FormData();
