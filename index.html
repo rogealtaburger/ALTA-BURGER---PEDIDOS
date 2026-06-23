@@ -27,6 +27,7 @@
         .tag-especial {display:inline-block; background:var(--dorado); color:#000; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-left:0.5rem; vertical-align:middle;}
         .boton-pedir {background:var(--dorado); color:#000; padding:0.9rem 2rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:1.1rem; border:none; cursor:pointer; width:100%; transition:background 0.2s;}
         .boton-pedir:hover {background:var(--dorado-claro);}
+        .boton-pedir:disabled {background:#555; cursor:not-allowed; color:#888;}
         .info-adicional {background:var(--gris); padding:1.5rem; border-radius:12px; margin-top:2rem;}
         .nota-veggie {background:var(--gris); border:2px dashed var(--dorado); border-radius:12px; padding:1.5rem; text-align:center; margin-top:1rem;}
         .nota-veggie h3 {color:var(--dorado); margin-bottom:0.5rem;}
@@ -37,8 +38,8 @@
         @keyframes aparecer {from{transform:scale(0.9); opacity:0;} to{transform:scale(1); opacity:1;}}
         .cerrar {color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer;}
         .cerrar:hover {color:var(--dorado);}
-        form label {display:block; margin:1rem 0 0.4rem; font-weight:500;}
-        form input, form select, form textarea {width:100%; padding:0.7rem; border:1px solid var(--gris-claro); border-radius:6px; background:#2a2a2a; color:var(--blanco); font-size:1rem;}
+        label {display:block; margin:1rem 0 0.4rem; font-weight:500;}
+        input, select, textarea {width:100%; padding:0.7rem; border:1px solid var(--gris-claro); border-radius:6px; background:#2a2a2a; color:var(--blanco); font-size:1rem;}
         .mensaje-exito {display:none; color:#4cd964; text-align:center; padding:1rem; font-weight:bold;}
     </style>
 </head>
@@ -243,112 +244,331 @@
     </section>
 </div>
 
-<!-- --- VENTANA MODAL CON EL FORMULARIO --- -->
+<!-- --- VENTANA MODAL CON EL FORMULARIO (CARRITO) --- -->
 <div id="modalPedido" class="modal">
     <div class="modal-contenido">
         <span class="cerrar" onclick="cerrarModal()">&times;</span>
         <h2 style="text-align:center; margin-top:0;">📋 Tu Pedido</h2>
 
-        <form id="formPedido">
-            <label>Nombre completo *</label>
-            <input type="text" name="nombre" required>
+        <div id="pantallaCarrito">
+            <!-- SECCIÓN 1: Agregar Productos -->
+            <div style="background:#222; padding:1.2rem; border-radius:8px; margin-bottom:1.5rem;">
+                <h3 style="color:var(--dorado); margin-bottom:0.5rem; font-size:1.1rem;">1. Armá tu carrito</h3>
+                
+                <label>Producto</label>
+                <select id="prod_nombre">
+                    <option value="">Elegir hamburguesa / combo...</option>
+                    <optgroup label="Hamburguesas">
+                        <option value="Messias Burger">Messias Burger</option>
+                        <option value="Messias Spicy">Messias Spicy</option>
+                        <option value="Palta Burger">Palta Burger</option>
+                        <option value="Big Burger">Big Burger</option>
+                        <option value="Special Burger">Special Burger</option>
+                        <option value="Classic Burger">Classic Burger</option>
+                        <option value="Provolona">Provolona</option>
+                        <option value="Capresse Burger">Capresse Burger</option>
+                        <option value="Spring Burger">Spring Burger</option>
+                        <option value="Cheese Burger">Cheese Burger</option>
+                        <option value="American Burger">American Burger</option>
+                        <option value="Súper Bacon">Súper Bacon</option>
+                        <option value="Smoke Barbecue">Smoke Barbecue</option>
+                        <option value="Irresistible Cheese">Irresistible Cheese</option>
+                        <option value="Oh My Cuarto!">Oh My Cuarto!</option>
+                        <option value="Alta Burger">Alta Burger</option>
+                    </optgroup>
+                    <optgroup label="Menú Infantil">
+                        <option value="Menú Infantil">Menú Infantil</option>
+                    </optgroup>
+                    <optgroup label="Combos">
+                        <option value="Combo para 2">Combo para 2</option>
+                        <option value="Combo para 3">Combo para 3</option>
+                        <option value="Combo para 4">Combo para 4</option>
+                    </optgroup>
+                </select>
 
-            <label>Teléfono *</label>
-            <input type="tel" name="telefono" required>
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label>Tamaño</label>
+                        <select id="prod_tamano">
+                            <option value="M">Mediana (M)</option>
+                            <option value="XL">Extra Grande (XL)</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Medallones</label>
+                        <select id="prod_medallones">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                </div>
 
-            <label>Tipo de pedido *</label>
-            <select name="tipo" required>
-                <option value="">Elegir...</option>
-                <option>Comer en el local</option>
-                <option>Para llevar</option>
-            </select>
+                <label>Agregados / Papas Extras</label>
+                <select id="prod_agregados">
+                    <option value="Ninguno">Ninguno</option>
+                    <option value="Papas Extras">Papas Extras (+$6.000)</option>
+                    <option value="Papas Solas Grandes">Papas Solas Grandes (+$14.000)</option>
+                    <option value="Papas con Huevo Grandes">Papas con Huevo Grandes (+$18.000)</option>
+                    <option value="Papas con Cheddar y Bacon Grandes">Papas con Cheddar y Bacon Grandes (+$22.000)</option>
+                    <option value="Papas con Crema, Verdeo y Jamón Cocido">Papas con Crema, Verdeo y Jamón Cocido (+$18.000)</option>
+                    <option value="Papas con Queso Azul, Verdeo y Jamón Cocido">Papas con Queso Azul, Verdeo y Jamón Cocido (+$18.000)</option>
+                    <option value="Cambiar por medallón Veggie">Cambiar por medallón Veggie</option>
+                </select>
 
-            <label>Producto principal *</label>
-            <select name="producto" required>
-                <option value="">Elegir hamburguesa / combo...</option>
-                <optgroup label="Hamburguesas">
-                    <option>Messias Burger</option>
-                    <option>Messias Spicy</option>
-                    <option>Palta Burger</option>
-                    <option>Big Burger</option>
-                    <option>Special Burger</option>
-                    <option>Classic Burger</option>
-                    <option>Provolona</option>
-                    <option>Capresse Burger</option>
-                    <option>Spring Burger</option>
-                    <option>Cheese Burger</option>
-                    <option>American Burger</option>
-                    <option>Súper Bacon</option>
-                    <option>Smoke Barbecue</option>
-                    <option>Irresistible Cheese</option>
-                    <option>Oh My Cuarto!</option>
-                    <option>Alta Burger</option>
-                </optgroup>
-                <optgroup label="Menú Infantil">
-                    <option>Menú Infantil</option>
-                </optgroup>
-                <optgroup label="Combos">
-                    <option>Combo para 2</option>
-                    <option>Combo para 3</option>
-                    <option>Combo para 4</option>
-                </optgroup>
-            </select>
+                <button type="button" onclick="agregarAlCarrito()" style="background:#4cd964; color:#000; padding:0.7rem; border-radius:6px; font-weight:bold; width:100%; border:none; cursor:pointer; margin-top:1rem;">➕ AGREGAR AL CARRITO</button>
+            </div>
 
-            <label>Tamaño *</label>
-            <select name="tamano" required>
-                <option>Mediana (M)</option>
-                <option>Extra Grande (XL)</option>
-            </select>
+            <!-- SECCIÓN 2: El Carrito -->
+            <div style="margin-bottom:1.5rem; border:2px solid var(--gris-claro); padding:1rem; border-radius:8px; background:#1a1a1a;">
+                <h3 style="color:var(--dorado); margin-bottom:1rem; font-size:1.1rem;">🛒 Tu Pedido Actual</h3>
+                <ul id="listaCarrito" style="list-style:none; margin-bottom:1rem; font-size:0.95rem;">
+                    <li style="color:#aaa; text-align:center;">El carrito está vacío. Agregá productos arriba.</li>
+                </ul>
+                <div style="font-size:1.3rem; text-align:right; border-top:1px dashed #444; padding-top:0.5rem; color:#4cd964; font-weight:bold;">
+                    Total: $<span id="totalCarrito">0</span>
+                </div>
+            </div>
 
-            <label>Cantidad de medallones</label>
-            <select name="medallones">
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-            </select>
+            <!-- SECCIÓN 3: Datos de Envío -->
+            <form id="formPedido">
+                <h3 style="color:var(--dorado); margin-bottom:1rem; font-size:1.1rem;">2. Datos para el retiro/envío</h3>
+                
+                <label>Nombre completo *</label>
+                <input type="text" id="cli_nombre" required>
 
-            <label>Agregados / Extras</label>
-            <select name="agregados">
-                <option>Ninguno</option>
-                <option>Papas Extras $6.000</option>
-                <option>Papas Solas Grandes $14.000</option>
-                <option>Papas con Huevo Grandes $18.000</option>
-                <option>Papas con Cheddar y Bacon Grandes $22.000</option>
-                <option>Papas con Crema, Verdeo y Jamón Cocido $18.000</option>
-                <option>Papas con Queso Azul, Verdeo y Jamón Cocido $18.000</option>
-                <option>Cambiar por medallón Veggie</option>
-            </select>
+                <label>Teléfono *</label>
+                <input type="tel" id="cli_telefono" required>
 
-            <label>Observaciones</label>
-            <textarea name="observaciones" rows="2" placeholder="Ej: Sin cebolla, bien cocida..."></textarea>
+                <label>Tipo de pedido *</label>
+                <select id="cli_tipo" required>
+                    <option value="">Elegir...</option>
+                    <option value="Comer en el local">Comer en el local</option>
+                    <option value="Para llevar">Para llevar</option>
+                </select>
 
-            <button type="submit" class="boton-pedir" style="margin-top:1.5rem;">✅ ENVIAR PEDIDO</button>
-        </form>
+                <label>Observaciones generales del pedido</label>
+                <textarea id="cli_observaciones" rows="2" placeholder="Ej: Sin cebolla, o pasaré a buscar a las 21hs..."></textarea>
 
-        <div id="mensajeExito" class="mensaje-exito">¡Pedido enviado correctamente! En breve lo preparamos.</div>
+                <button type="submit" id="btnConfirmar" class="boton-pedir" style="margin-top:1.5rem;" disabled>✅ CONFIRMAR Y ENVIAR PEDIDO</button>
+            </form>
+        </div>
+
+        <div id="mensajeExito" class="mensaje-exito">
+            <h2 style="color:#4cd964; margin-bottom:1rem;">¡Pedido enviado correctamente!</h2>
+            <p style="color:#fff; font-weight:normal; margin-bottom:1rem;">En breve lo preparamos. Se descargó tu ticket de comprobante.</p>
+            <button type="button" onclick="cerrarModal()" class="boton-pedir" style="max-width:200px;">Cerrar</button>
+        </div>
     </div>
 </div>
 
+<footer style="text-align:center; padding: 2rem 1rem; color: #888; font-size: 0.9rem; margin-top: 2rem; border-top: 1px solid var(--gris-claro);">
+    Desarrollador: Sistema VICUS
+</footer>
+
 <script>
+// Base de datos de precios
+const precios = {
+    "Messias Burger": {M: 21000, XL: 26500},
+    "Messias Spicy": {M: 21000, XL: 26500},
+    "Palta Burger": {M: 22000, XL: 27500},
+    "Big Burger": {M: 21500, XL: 27500},
+    "Special Burger": {M: 20000, XL: 25000},
+    "Classic Burger": {M: 20000, XL: 25000},
+    "Provolona": {M: 22500, XL: 27500},
+    "Capresse Burger": {M: 20500, XL: 25500},
+    "Spring Burger": {M: 18500, XL: 24500},
+    "Cheese Burger": {M: 18000, XL: 24500},
+    "American Burger": {M: 20000, XL: 25000},
+    "Súper Bacon": {M: 21500, XL: 27500},
+    "Smoke Barbecue": {M: 20000, XL: 25000},
+    "Irresistible Cheese": {M: 20000, XL: 25000},
+    "Oh My Cuarto!": {M: 21500, XL: 27500},
+    "Alta Burger": {M: 27500, XL: 33500},
+    "Menú Infantil": {M: 19500, XL: 19500},
+    "Combo para 2": {M: 49900, XL: 60000},
+    "Combo para 3": {M: 69500, XL: 87500},
+    "Combo para 4": {M: 84500, XL: 105000}
+};
+
+const preciosExtras = {
+    "Ninguno": 0,
+    "Papas Extras": 6000,
+    "Papas Solas Grandes": 14000,
+    "Papas con Huevo Grandes": 18000,
+    "Papas con Cheddar y Bacon Grandes": 22000,
+    "Papas con Crema, Verdeo y Jamón Cocido": 18000,
+    "Papas con Queso Azul, Verdeo y Jamón Cocido": 18000,
+    "Cambiar por medallón Veggie": 0
+};
+
+let carrito = [];
+let totalPedido = 0;
+
 // Control del modal
-function abrirModal() {document.getElementById('modalPedido').style.display = 'block';}
+function abrirModal() {
+    document.getElementById('modalPedido').style.display = 'block';
+    document.getElementById('pantallaCarrito').style.display = 'block';
+    document.getElementById('mensajeExito').style.display = 'none';
+}
 function cerrarModal() {document.getElementById('modalPedido').style.display = 'none';}
 window.onclick = function(e) {if(e.target == document.getElementById('modalPedido')) cerrarModal();}
 
-// --- CONEXIÓN A GOOGLE SHEETS ---
+// Funciones del Carrito
+function agregarAlCarrito() {
+    const nombre = document.getElementById('prod_nombre').value;
+    if(!nombre) { alert("⚠️ Por favor elegí una hamburguesa o combo primero."); return; }
+    const tamano = document.getElementById('prod_tamano').value;
+    const medallones = document.getElementById('prod_medallones').value;
+    const extra = document.getElementById('prod_agregados').value;
+
+    let precioBase = precios[nombre] ? precios[nombre][tamano] : 0;
+    if(!precioBase) { alert("⚠️ El tamaño " + tamano + " no está disponible para " + nombre); return; }
+    
+    let precioExtra = preciosExtras[extra] || 0;
+    let subtotal = precioBase + precioExtra;
+
+    carrito.push({ nombre, tamano, medallones, extra, subtotal });
+    
+    // Limpiar selects (opcional, dejamos el producto por si quiere otra igual)
+    document.getElementById('prod_agregados').value = "Ninguno";
+    document.getElementById('prod_medallones').value = "1";
+    
+    actualizarCarrito();
+}
+
+function eliminarDelCarrito(index) {
+    carrito.splice(index, 1);
+    actualizarCarrito();
+}
+
+function actualizarCarrito() {
+    const lista = document.getElementById('listaCarrito');
+    const totalSpan = document.getElementById('totalCarrito');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+
+    lista.innerHTML = '';
+    totalPedido = 0;
+
+    if(carrito.length === 0) {
+        lista.innerHTML = '<li style="color:#aaa; text-align:center;">El carrito está vacío. Agregá productos arriba.</li>';
+        btnConfirmar.disabled = true;
+        totalSpan.innerText = '0';
+        return;
+    }
+
+    btnConfirmar.disabled = false;
+
+    carrito.forEach((item, index) => {
+        totalPedido += item.subtotal;
+        let txt = `<strong style="color:var(--blanco)">${item.nombre}</strong> (${item.tamano}) - x${item.medallones} med.`;
+        if(item.extra !== "Ninguno") txt += `<br><small style="color:#fdba74">+ ${item.extra}</small>`;
+        
+        const li = document.createElement('li');
+        li.style.borderBottom = "1px solid #333";
+        li.style.padding = "0.6rem 0";
+        li.style.display = "flex";
+        li.style.justifyContent = "space-between";
+        li.style.alignItems = "center";
+        
+        li.innerHTML = `
+            <div style="flex:1;">${txt}</div>
+            <div style="color:#4cd964; margin:0 10px; font-weight:bold;">$${item.subtotal.toLocaleString('es-AR')}</div>
+            <button type="button" onclick="eliminarDelCarrito(${index})" style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">X</button>
+        `;
+        lista.appendChild(li);
+    });
+
+    totalSpan.innerText = totalPedido.toLocaleString('es-AR');
+}
+
+// Generación de Ticket
+function descargarTicket(orderId, obs) {
+    let ticket = `=================================\n`;
+    ticket += `        🍔 ALTA BURGER\n`;
+    ticket += `      TICKET DE PEDIDO\n`;
+    ticket += `=================================\n\n`;
+    ticket += `Nº de Pedido: ${orderId}\n`;
+    ticket += `Fecha: ${new Date().toLocaleString('es-AR')}\n\n`;
+    ticket += `Cliente: ${document.getElementById('cli_nombre').value}\n`;
+    ticket += `Teléfono: ${document.getElementById('cli_telefono').value}\n`;
+    ticket += `Entrega: ${document.getElementById('cli_tipo').value}\n`;
+    ticket += `---------------------------------\n`;
+    ticket += `PRODUCTOS:\n`;
+    carrito.forEach(i => {
+        ticket += `- ${i.nombre} (${i.tamano}) x${i.medallones} med.\n`;
+        if (i.extra !== 'Ninguno') ticket += `  Extra: ${i.extra}\n`;
+        ticket += `  Subtotal: $${i.subtotal.toLocaleString('es-AR')}\n\n`;
+    });
+    ticket += `---------------------------------\n`;
+    if (obs) ticket += `Observaciones: ${obs}\n---------------------------------\n`;
+    ticket += `TOTAL A PAGAR: $${totalPedido.toLocaleString('es-AR')}\n`;
+    ticket += `=================================\n`;
+    ticket += `¡Gracias por elegirnos!\n`;
+
+    const blob = new Blob([ticket], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AltaBurger_Pedido_${orderId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// --- ENVÍO A GOOGLE SHEETS ---
 const scriptURL = "https://script.google.com/macros/s/AKfycbzCr8DssB5pImOCTnwJ0NzjqjuTPw-LSHDjKnOGeXTmvgfzFACF0SjM2XveF7hcoA9D/exec";
 const form = document.getElementById('formPedido');
-const mensaje = document.getElementById('mensajeExito');
 
 form.addEventListener('submit', e => {
     e.preventDefault();
-    fetch(scriptURL, {method: 'POST', body: new FormData(form)})
+    if(carrito.length === 0) return;
+
+    // Generar ID único
+    const orderId = "#AB-" + Math.floor(1000 + Math.random() * 9000);
+
+    // Combinar productos en un solo texto para que entre en la misma columna de Sheets
+    const descripciones = carrito.map(i => `[${i.nombre} | ${i.tamano} | ${i.medallones}med | ${i.extra}]`).join(' + ');
+
+    // Datos originales + nuevas combinaciones
+    const formData = new FormData();
+    formData.append('nombre', document.getElementById('cli_nombre').value);
+    formData.append('telefono', document.getElementById('cli_telefono').value);
+    formData.append('tipo', document.getElementById('cli_tipo').value);
+    formData.append('producto', descripciones);
+    formData.append('tamano', 'Varios');
+    formData.append('medallones', carrito.length + ' prod(s)');
+    formData.append('agregados', 'Ver producto');
+    
+    const obsOriginal = document.getElementById('cli_observaciones').value;
+    const obsFinal = `[PEDIDO: ${orderId}] [TOTAL: $${totalPedido.toLocaleString('es-AR')}] -- Obs: ${obsOriginal}`;
+    formData.append('observaciones', obsFinal);
+
+    // UX: botón cargando
+    const btn = document.getElementById('btnConfirmar');
+    btn.innerText = "⏳ ENVIANDO PEDIDO...";
+    btn.disabled = true;
+
+    // Enviar sin esperar respuesta JSON por tema CORS
+    fetch(scriptURL, {method: 'POST', body: formData, mode: 'no-cors'})
     .then(() => {
-        form.style.display = 'none';
-        mensaje.style.display = 'block';
-        setTimeout(() => {cerrarModal(); form.reset(); form.style.display = 'block'; mensaje.style.display = 'none';}, 4000);
+        descargarTicket(orderId, obsOriginal);
+
+        document.getElementById('pantallaCarrito').style.display = 'none';
+        document.getElementById('mensajeExito').style.display = 'block';
+        
+        // Reset para el próximo pedido
+        form.reset();
+        carrito = [];
+        actualizarCarrito();
+        btn.innerText = "✅ CONFIRMAR Y ENVIAR PEDIDO";
     })
-    .catch(error => alert('Error al enviar: ' + error.message));
+    .catch(error => {
+        alert('Error al enviar: ' + error.message);
+        btn.innerText = "✅ CONFIRMAR Y ENVIAR PEDIDO";
+        btn.disabled = false;
+    });
 });
 </script>
 
