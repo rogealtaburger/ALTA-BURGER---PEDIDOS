@@ -1,15 +1,18 @@
-const CACHE_NAME = 'altaburger-v1';
+const CACHE_NAME = 'altaburger-v2';
 const urlsToCache = [
-  './ALTA%20-%20BURGER%20---%20Pedidos.html',
-  './manifest.json'
+  './',
+  './manifest.json',
+  './logo-alta-burger.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      // Caching resiliente: si un archivo falla, no frena el resto
+      return Promise.allSettled(
+        urlsToCache.map(url => cache.add(url).catch(err => console.warn('No se pudo cachear:', url)))
+      );
+    })
   );
 });
 
