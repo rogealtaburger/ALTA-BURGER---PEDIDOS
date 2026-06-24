@@ -409,7 +409,7 @@
 <script>
 // --- CONFIGURACIÓN DE WHATSAPP ---
 const WHATSAPP_NUMERO = "5492996908502";
-const ALIAS_CUENTA = "alta.burger.mp"; // ACÁ PONDREMOS EL ALIAS REAL
+const ALIAS_CUENTA = "Alta48"; // ALIAS REAL
 let ultimoIdPedido = "";
 let ultimoTotalPedido = 0;
 let ultimoNombreCliente = "";
@@ -572,22 +572,23 @@ function descargarTicket(orderId, obs) {
 const scriptURL = "https://script.google.com/macros/s/AKfycbzCr8DssB5pImOCTnwJ0NzjqjuTPw-LSHDjKnOGeXTmvgfzFACF0SjM2XveF7hcoA9D/exec";
 const form = document.getElementById('formPedido');
 
-// --- SISTEMA DE INVENTARIO AUTOMÁTICO ---
-window.addEventListener('load', () => {
-    fetch(scriptURL)
-    .then(res => res.json())
-    .then(data => {
-        if(data.estado === "OK" && data.productosAgotados) {
-            const select = document.getElementById('prod_nombre');
-            for (let i = 0; i < select.options.length; i++) {
-                if (data.productosAgotados.includes(select.options[i].value)) {
-                    select.options[i].disabled = true;
-                    select.options[i].text += " ❌ (AGOTADO)";
-                }
+// --- SISTEMA DE INVENTARIO AUTOMÁTICO (JSONP para evitar bloqueo CORS) ---
+function procesarInventario(data) {
+    if(data.estado === "OK" && data.productosAgotados) {
+        const select = document.getElementById('prod_nombre');
+        for (let i = 0; i < select.options.length; i++) {
+            if (data.productosAgotados.includes(select.options[i].value)) {
+                select.options[i].disabled = true;
+                select.options[i].text += " ❌ (AGOTADO)";
+                select.options[i].style.color = "#999";
             }
         }
-    })
-    .catch(err => console.log("Inventario no sincronizado o sin conexión:", err));
+    }
+}
+window.addEventListener('load', () => {
+    const script = document.createElement('script');
+    script.src = scriptURL + '?callback=procesarInventario';
+    document.head.appendChild(script);
 });
 
 form.addEventListener('submit', e => {
