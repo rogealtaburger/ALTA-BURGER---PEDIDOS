@@ -524,6 +524,7 @@ form.addEventListener('submit', e => {
 
     // Datos originales + nuevas combinaciones
     const formData = new FormData();
+    formData.append('orderId', orderId);
     formData.append('nombre', document.getElementById('cli_nombre').value);
     formData.append('telefono', document.getElementById('cli_telefono').value);
     formData.append('tipo', document.getElementById('cli_tipo').value);
