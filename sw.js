@@ -1,4 +1,4 @@
-const CACHE_NAME = 'altaburger-v2';
+const CACHE_NAME = 'altaburger-v3';
 const urlsToCache = [
   './',
   './manifest.json',
