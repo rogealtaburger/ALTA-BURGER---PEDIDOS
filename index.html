@@ -383,7 +383,7 @@ function procesarCatalogo(data) {
 
         // Construir HTML del menú y opciones del formulario
         for (const cat in categorias) {
-            let icono = cat === 'Hamburguesas' ? '🍔' : (cat === 'Papas' ? '🍟' : '🎉');
+            let icono = cat === 'Hamburguesas' ? '<img src="./logo-alta-burger.png" style="height:28px; vertical-align:middle; margin-right:8px;" alt="Logo">' : (cat === 'Papas' ? '🍟' : '🎉');
             htmlMenu += `<section><h2>${icono} ${cat}</h2>`;
             if (cat === 'Hamburguesas') htmlMenu += '<p style="margin-bottom:1.5rem; color:#aaa;">Todas incluyen papas 🍟 | Precios con x1 medallón</p>';
             
