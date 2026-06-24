@@ -1,8 +1,7 @@
 const CACHE_NAME = 'altaburger-v1';
 const urlsToCache = [
   './ALTA%20-%20BURGER%20---%20Pedidos.html',
-  './manifest.json',
-  'https://i.imgur.com/jqi35ZA.png'
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
