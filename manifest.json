@@ -8,8 +8,8 @@
   "description": "Pedí las mejores hamburguesas de Neuquén",
   "icons": [
     {
-      "src": "https://i.imgur.com/jqi35ZA.png",
-      "sizes": "any",
+      "src": "./logo-alta-burger.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
