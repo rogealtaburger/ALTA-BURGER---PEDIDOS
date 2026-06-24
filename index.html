@@ -510,17 +510,19 @@ form.addEventListener('submit', e => {
     // Generar ID único
     const orderId = "#AB-" + Math.floor(1000 + Math.random() * 9000);
 
-    // Combinar productos en un solo texto para que entre en la misma columna de Sheets
+    // Combinar productos en un formato limpio (saltos de línea)
     let totalCantidad = 0;
     const descripciones = carrito.map(i => {
         let cant = i.cantidad || 1;
         totalCantidad += cant;
-        let cantPrefijo = cant > 1 ? `${cant}x ` : '';
-        let det = `[${cantPrefijo}${i.nombre} | ${i.tamano} | ${i.medallones}med | ${i.extra}]`;
-        if (i.aclara) det += ` (Aclaración: ${i.aclara})`;
-        if (i.esCanje) det += ` [PREMIO CANJEADO]`;
+        let cantPrefijo = cant > 1 ? `${cant}x ` : '1x ';
+        
+        let det = `${cantPrefijo}${i.nombre} (${i.tamano}) - ${i.medallones} med.`;
+        if (i.extra && i.extra !== 'Ninguno') det += `\n   + Extra: ${i.extra}`;
+        if (i.aclara) det += `\n   + Obs: ${i.aclara}`;
+        if (i.esCanje) det += `\n   🎁 [PREMIO CANJEADO]`;
         return det;
-    }).join(' + ');
+    }).join('\n\n');
 
     // Datos originales + nuevas combinaciones
     const formData = new FormData();
@@ -541,7 +543,9 @@ form.addEventListener('submit', e => {
     
     const obsOriginal = document.getElementById('cli_observaciones').value;
     const metodoPago = document.getElementById('cli_pago').value;
-    const obsFinal = `[PEDIDO: ${orderId}] [PAGO: ${metodoPago}] [TOTAL: $${totalPedido.toLocaleString('es-AR')}] -- Obs: ${obsOriginal}`;
+    
+    let obsFinal = `💰 Pago: ${metodoPago} | Total: $${totalPedido.toLocaleString('es-AR')}`;
+    if (obsOriginal) obsFinal += `\n🗣️ Cliente: ${obsOriginal}`;
     formData.append('observaciones', obsFinal);
 
     // Guardar para el WhatsApp
