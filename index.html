@@ -120,6 +120,21 @@
                             <option value="3">3</option>
                         </select>
                     </div>
+                    <div style="flex:1;">
+                        <label>Cantidad</label>
+                        <select id="prod_cantidad">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
                 </div>
 
                 <label>Agregados / Papas Extras</label>
@@ -288,16 +303,18 @@ function agregarAlCarrito() {
     const medallones = document.getElementById('prod_medallones').value;
     const extra = document.getElementById('prod_agregados').value;
     const aclara = document.getElementById('prod_aclaraciones').value.trim();
+    const cantidad = parseInt(document.getElementById('prod_cantidad').value) || 1;
 
     let precioBase = precios[nombre] ? precios[nombre][tamano] : 0;
     if(!precioBase) { alert("⚠️ El tamaño " + tamano + " no está disponible para " + nombre); return; }
     
     let precioExtra = preciosExtras[extra] || 0;
-    let subtotal = precioBase + precioExtra;
+    let subtotal = (precioBase + precioExtra) * cantidad;
 
-    carrito.push({ nombre, tamano, medallones, extra, aclara, subtotal });
+    carrito.push({ nombre, tamano, medallones, extra, aclara, cantidad, subtotal });
     
     // Limpiar selects (opcional, dejamos el producto por si quiere otra igual)
+    document.getElementById('prod_cantidad').value = "1";
     document.getElementById('prod_agregados').value = "Ninguno";
     document.getElementById('prod_medallones').value = "1";
     document.getElementById('prod_aclaraciones').value = "";
@@ -333,7 +350,8 @@ function actualizarCarrito() {
         totalPedido += item.subtotal;
         if(item.esCanje) puntosUsados += item.puntosCobrados;
         
-        let txt = `<strong style="color:var(--blanco)">${item.nombre}</strong> (${item.tamano}) - x${item.medallones} med.`;
+        let cantTexto = item.cantidad && item.cantidad > 1 ? `<span style="color:#fdba74">${item.cantidad}x </span>` : '';
+        let txt = `<strong style="color:var(--blanco)">${cantTexto}${item.nombre}</strong> (${item.tamano}) - x${item.medallones} med.`;
         if(item.esCanje) txt = `<strong style="color:var(--dorado)">🎁 ${item.nombre}</strong> (PREMIO GRATIS)`;
         else {
             if(item.extra !== "Ninguno") txt += `<br><small style="color:#fdba74">+ ${item.extra}</small>`;
@@ -491,9 +509,14 @@ form.addEventListener('submit', e => {
     const orderId = "#AB-" + Math.floor(1000 + Math.random() * 9000);
 
     // Combinar productos en un solo texto para que entre en la misma columna de Sheets
+    let totalCantidad = 0;
     const descripciones = carrito.map(i => {
-        let det = `[${i.nombre} | ${i.tamano} | ${i.medallones}med | ${i.extra}]`;
+        let cant = i.cantidad || 1;
+        totalCantidad += cant;
+        let cantPrefijo = cant > 1 ? `${cant}x ` : '';
+        let det = `[${cantPrefijo}${i.nombre} | ${i.tamano} | ${i.medallones}med | ${i.extra}]`;
         if (i.aclara) det += ` (Aclaración: ${i.aclara})`;
+        if (i.esCanje) det += ` [PREMIO CANJEADO]`;
         return det;
     }).join(' + ');
 
@@ -504,7 +527,7 @@ form.addEventListener('submit', e => {
     formData.append('tipo', document.getElementById('cli_tipo').value);
     formData.append('producto', descripciones);
     formData.append('tamano', 'Varios');
-    formData.append('medallones', carrito.length + ' prod(s)');
+    formData.append('medallones', totalCantidad + ' prod(s)');
     formData.append('agregados', 'Ver producto');
     
     // Club Alta Burger
