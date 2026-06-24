@@ -57,6 +57,11 @@
     <p>Las mejores hamburguesas de Neuquén<br>Para comer en el local | Para llevar</p>
 </header>
 
+<div id="club-banner" style="background:#111; border-bottom:2px solid var(--dorado); text-align:center; padding:10px; font-size:15px;">
+    <span id="club-login-text">¿Sos parte del <strong>Club Alta Burger</strong>? <a href="#" onclick="abrirModalLogin(); return false;" style="color:var(--dorado); font-weight:bold; text-decoration:none;">Ingresá con tu teléfono</a> para ver tus puntos.</span>
+    <span id="club-user-text" style="display:none; color:var(--blanco);">¡Hola <strong id="club-nombre" style="color:var(--dorado);"></strong>! Tenés <strong id="club-puntos" style="color:#4cd964;">0</strong> puntos disponibles.</span>
+</div>
+
 <div class="contenedor">
 
     <!-- CONTENEDOR DINÁMICO DEL MENÚ -->
@@ -141,9 +146,10 @@
                 <ul id="listaCarrito" style="list-style:none; margin-bottom:1rem; font-size:0.95rem;">
                     <li style="color:#aaa; text-align:center;">El carrito está vacío. Agregá productos arriba.</li>
                 </ul>
-                <div style="font-size:1.3rem; text-align:right; border-top:1px dashed #444; padding-top:0.5rem; color:#4cd964; font-weight:bold;">
+                <div style="font-size:1.3rem; text-align:right; border-top:1px dashed #444; padding-top:0.5rem; color:#4cd964; font-weight:bold; margin-bottom:10px;">
                     Total: $<span id="totalCarrito">0</span>
                 </div>
+                <button type="button" id="btnPremios" class="boton-pedir" style="background:var(--dorado); color:#000; display:none; width:100%; padding:0.5rem; font-size:1rem; border-radius:5px;" onclick="abrirModalPremios()">🎁 CANJEAR PUNTOS POR PREMIOS</button>
             </div>
 
             <!-- SECCIÓN 3: Datos de Envío -->
@@ -196,6 +202,28 @@
     </div>
 </div>
 
+<!-- MODAL LOGIN CLUB -->
+<div id="modalLogin" class="modal">
+    <div class="modal-contenido" style="text-align:center;">
+        <span class="cerrar" onclick="cerrarModalLogin()">&times;</span>
+        <h2 style="color:var(--dorado); margin-bottom:10px;">👑 Club Alta Burger</h2>
+        <p style="color:#ccc; font-size:0.9rem; margin-bottom:15px;">Ingresá con tu número de teléfono para ver tus puntos acumulados y canjear premios.</p>
+        <input type="number" id="login_tel" placeholder="Ej: 2994593155" style="margin-bottom:15px; text-align:center; font-size:1.2rem; font-weight:bold;">
+        <button class="boton-pedir" onclick="consultarPuntos()" id="btnLogin">INGRESAR</button>
+        <div id="login-msg" style="margin-top:15px; font-weight:bold; color:var(--dorado);"></div>
+    </div>
+</div>
+
+<!-- MODAL PREMIOS -->
+<div id="modalPremios" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModalPremios()">&times;</span>
+        <h2 style="color:var(--dorado); margin-bottom:15px; text-align:center;">🎁 Canjear Premio</h2>
+        <p style="color:#ccc; font-size:0.9rem; margin-bottom:15px; text-align:center;">Elegí un producto para llevártelo GRATIS usando tus puntos.</p>
+        <div id="lista-premios" style="max-height:60vh; overflow-y:auto;"></div>
+    </div>
+</div>
+
 <footer style="text-align:center; padding: 2rem 1rem; color: #888; font-size: 0.9rem; margin-top: 2rem; border-top: 1px solid var(--gris-claro);">
     Desarrollador: Sistema VICUS
 </footer>
@@ -220,6 +248,10 @@ const ALIAS_CUENTA = "Alta48"; // ALIAS REAL
 let ultimoIdPedido = "";
 let ultimoTotalPedido = 0;
 let ultimoNombreCliente = "";
+
+// Variables Club Alta Burger
+let puntosCliente = 0;
+let telefonoCliente = "";
 
 // Base de datos de precios dinámica (se llena desde Google Sheets)
 let precios = {};
@@ -290,16 +322,23 @@ function actualizarCarrito() {
         lista.innerHTML = '<li style="color:#aaa; text-align:center;">El carrito está vacío. Agregá productos arriba.</li>';
         btnConfirmar.disabled = true;
         totalSpan.innerText = '0';
+        document.getElementById('btnPremios').style.display = (puntosCliente > 0) ? 'block' : 'none';
         return;
     }
 
     btnConfirmar.disabled = false;
+    let puntosUsados = 0;
 
     carrito.forEach((item, index) => {
         totalPedido += item.subtotal;
+        if(item.esCanje) puntosUsados += item.puntosCobrados;
+        
         let txt = `<strong style="color:var(--blanco)">${item.nombre}</strong> (${item.tamano}) - x${item.medallones} med.`;
-        if(item.extra !== "Ninguno") txt += `<br><small style="color:#fdba74">+ ${item.extra}</small>`;
-        if(item.aclara) txt += `<br><small style="color:#aaa; font-style:italic;">* Aclaración: ${item.aclara}</small>`;
+        if(item.esCanje) txt = `<strong style="color:var(--dorado)">🎁 ${item.nombre}</strong> (PREMIO GRATIS)`;
+        else {
+            if(item.extra !== "Ninguno") txt += `<br><small style="color:#fdba74">+ ${item.extra}</small>`;
+            if(item.aclara) txt += `<br><small style="color:#aaa; font-style:italic;">* Aclaración: ${item.aclara}</small>`;
+        }
         
         const li = document.createElement('li');
         li.style.borderBottom = "1px solid #333";
@@ -317,6 +356,9 @@ function actualizarCarrito() {
     });
 
     totalSpan.innerText = totalPedido.toLocaleString('es-AR');
+    let ptsDisponibles = puntosCliente - puntosUsados;
+    document.getElementById('btnPremios').style.display = (ptsDisponibles > 0) ? 'block' : 'none';
+    if(document.getElementById('club-puntos')) document.getElementById('club-puntos').innerText = ptsDisponibles;
 }
 
 // Generación de Ticket
@@ -465,6 +507,12 @@ form.addEventListener('submit', e => {
     formData.append('medallones', carrito.length + ' prod(s)');
     formData.append('agregados', 'Ver producto');
     
+    // Club Alta Burger
+    let ptosCanjeadosTot = 0;
+    carrito.forEach(i => { if (i.esCanje) ptosCanjeadosTot += i.puntosCobrados; });
+    formData.append('total_pagado', totalPedido);
+    formData.append('puntos_canjeados', ptosCanjeadosTot);
+    
     const obsOriginal = document.getElementById('cli_observaciones').value;
     const metodoPago = document.getElementById('cli_pago').value;
     const obsFinal = `[PEDIDO: ${orderId}] [PAGO: ${metodoPago}] [TOTAL: $${totalPedido.toLocaleString('es-AR')}] -- Obs: ${obsOriginal}`;
@@ -515,6 +563,91 @@ function enviarComprobanteWP() {
     const mensaje = `Hola! Soy ${ultimoNombreCliente}, te envío el comprobante de pago de mi pedido ${ultimoIdPedido} por el total de $${ultimoTotalPedido}.`;
     const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
+}
+
+// --- LÓGICA DEL CLUB ALTA BURGER ---
+function abrirModalLogin() { document.getElementById('modalLogin').style.display = 'flex'; }
+function cerrarModalLogin() { document.getElementById('modalLogin').style.display = 'none'; }
+function cerrarModalPremios() { document.getElementById('modalPremios').style.display = 'none'; }
+
+function consultarPuntos() {
+    var tel = document.getElementById('login_tel').value;
+    if (!tel) { alert("Ingresá tu número"); return; }
+    document.getElementById('login-msg').innerText = "Buscando puntos...";
+    document.getElementById('btnLogin').disabled = true;
+    
+    var script = document.createElement('script');
+    script.src = scriptURL + "?action=getPuntos&telefono=" + tel + "&callback=procesarPuntos&t=" + Date.now();
+    document.head.appendChild(script);
+}
+
+function procesarPuntos(data) {
+    document.getElementById('btnLogin').disabled = false;
+    document.getElementById('login-msg').innerText = "";
+    
+    if (data.estado === "OK") {
+        cerrarModalLogin();
+        document.getElementById('club-login-text').style.display = 'none';
+        document.getElementById('club-user-text').style.display = 'inline';
+        document.getElementById('club-nombre').innerText = data.nombre || 'Crack';
+        document.getElementById('club-puntos').innerText = data.puntos;
+        
+        telefonoCliente = data.telefono;
+        puntosCliente = Number(data.puntos) || 0;
+        
+        document.getElementById('cli_telefono').value = data.telefono;
+        if (data.nombre) document.getElementById('cli_nombre').value = data.nombre;
+        
+        actualizarCarrito();
+    } else {
+        alert("Hubo un error al buscar tus puntos.");
+    }
+}
+
+function abrirModalPremios() {
+    let puntosUsados = 0;
+    carrito.forEach(i => { if(i.esCanje) puntosUsados += i.puntosCobrados; });
+    let puntosDisp = puntosCliente - puntosUsados;
+    
+    let html = '';
+    catalogoCompleto.forEach(prod => {
+        if (prod.estado === 'ACTIVO') {
+            if (prod.precio_m > 0 && prod.precio_m <= puntosDisp) {
+                html += `<div style="border:1px solid #444; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><strong style="color:var(--dorado);">${prod.nombre} (M)</strong><br><small style="color:#aaa;">Costo: ${prod.precio_m} pts</small></div>
+                    <button class="boton-pedir" style="background:#4cd964; color:#000; padding:0.5rem 1rem; width:auto; border-radius:4px;" onclick="canjearProducto('${prod.nombre}', 'M', ${prod.precio_m})">CANJEAR</button>
+                </div>`;
+            }
+            if (prod.precio_xl > 0 && prod.precio_xl <= puntosDisp) {
+                html += `<div style="border:1px solid #444; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><strong style="color:var(--dorado);">${prod.nombre} (XL)</strong><br><small style="color:#aaa;">Costo: ${prod.precio_xl} pts</small></div>
+                    <button class="boton-pedir" style="background:#4cd964; color:#000; padding:0.5rem 1rem; width:auto; border-radius:4px;" onclick="canjearProducto('${prod.nombre}', 'XL', ${prod.precio_xl})">CANJEAR</button>
+                </div>`;
+            }
+        }
+    });
+    
+    if (html === '') {
+        html = '<p style="text-align:center; color:#fdba74;">Todavía no te alcanzan los puntos para llevarte un producto. ¡Seguí acumulando!</p>';
+    }
+    
+    document.getElementById('lista-premios').innerHTML = html;
+    document.getElementById('modalPremios').style.display = 'flex';
+}
+
+function canjearProducto(nombre, tamano, costoPuntos) {
+    carrito.push({
+        nombre: nombre,
+        tamano: tamano,
+        medallones: 1,
+        extra: 'Ninguno',
+        aclara: '',
+        subtotal: 0,
+        esCanje: true,
+        puntosCobrados: costoPuntos
+    });
+    cerrarModalPremios();
+    actualizarCarrito();
 }
 </script>
 
