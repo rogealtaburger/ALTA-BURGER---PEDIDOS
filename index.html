@@ -577,6 +577,11 @@ function procesarInventario(data) {
     if(data.estado === "OK" && data.productosAgotados) {
         const select = document.getElementById('prod_nombre');
         for (let i = 0; i < select.options.length; i++) {
+            // Limpiar marcas anteriores antes de re-aplicar
+            select.options[i].disabled = false;
+            select.options[i].text = select.options[i].text.replace(" ❌ (AGOTADO)", "");
+            select.options[i].style.color = "";
+            // Aplicar bloqueo si está agotado
             if (data.productosAgotados.includes(select.options[i].value)) {
                 select.options[i].disabled = true;
                 select.options[i].text += " ❌ (AGOTADO)";
@@ -585,10 +590,17 @@ function procesarInventario(data) {
         }
     }
 }
-window.addEventListener('load', () => {
-    const script = document.createElement('script');
-    script.src = scriptURL + '?callback=procesarInventario';
+function cargarInventario() {
+    var s = document.getElementById('scriptInventario');
+    if (s) s.remove();
+    var script = document.createElement('script');
+    script.id = 'scriptInventario';
+    script.src = scriptURL + '?callback=procesarInventario&t=' + Date.now();
     document.head.appendChild(script);
+}
+window.addEventListener('load', function() {
+    cargarInventario();
+    setInterval(cargarInventario, 120000); // Cada 2 minutos
 });
 
 form.addEventListener('submit', e => {
