@@ -1,11 +1,12 @@
 {
-  "name": "Alta Burger",
+  "name": "Alta Burger - Kiosco",
   "short_name": "Alta Burger",
-  "start_url": "./ALTA%20-%20BURGER%20---%20Pedidos.html",
+  "start_url": "./kiosco.html",
   "display": "standalone",
-  "background_color": "#111111",
+  "orientation": "portrait",
+  "background_color": "#0D0D0D",
   "theme_color": "#E8A500",
-  "description": "Pedí las mejores hamburguesas de Neuquén",
+  "description": "Kiosco de autoservicio Alta Burger. Pedí las mejores hamburguesas de Neuquén.",
   "icons": [
     {
       "src": "./logo-alta-burger.png",

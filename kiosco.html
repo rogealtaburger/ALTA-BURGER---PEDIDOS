@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alta Burger — Kiosco de Pedidos</title>
+    <meta name="description" content="Kiosco de autoservicio Alta Burger. Hacé tu pedido fácil y rápido.">
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#E8A500">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/jqi35ZA.png">
+
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+    /* ============================
+       1. RESET & BASE
+       ============================ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { font-size:16px; scroll-behavior:smooth; -webkit-tap-highlight-color:transparent; }
+    body {
+        font-family:'Inter', 'Segoe UI', Roboto, sans-serif;
+        background:var(--oscuro);
+        color:var(--texto);
+        line-height:1.5;
+        overflow:hidden;
+        height:100vh;
+        width:100vw;
+        position:relative;
+    }
+
+    /* ============================
+       2. DESIGN TOKENS
+       ============================ */
+    :root {
+        --dorado:#E8A500;
+        --dorado-claro:#F2BD3A;
+        --dorado-oscuro:#C48800;
+        --oscuro:#0D0D0D;
+        --superficie:#1A1A1A;
+        --superficie-elevada:#252525;
+        --borde:#333;
+        --texto:#F0F0F0;
+        --texto-sec:#A0A0A0;
+        --exito:#4CD964;
+        --error:#FF3B30;
+        --warning:#FF9500;
+        --glass-bg:rgba(26,26,26,0.88);
+        --glass-border:rgba(232,165,0,0.15);
+        --glass-blur:blur(24px);
+        --radius-sm:8px;
+        --radius-md:14px;
+        --radius-lg:20px;
+        --radius-xl:28px;
+        --shadow-sm:0 2px 8px rgba(0,0,0,0.3);
+        --shadow-md:0 4px 20px rgba(0,0,0,0.4);
+        --shadow-lg:0 8px 40px rgba(0,0,0,0.5);
+        --shadow-glow:0 0 30px rgba(232,165,0,0.15);
+        --transition:0.3s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ============================
+       3. SCREENS
+       ============================ */
+    .screen {
+        position:absolute; inset:0;
+        display:flex; flex-direction:column;
+        overflow-y:auto; overflow-x:hidden;
+        opacity:0; pointer-events:none;
+        transition:opacity 0.35s ease, transform 0.35s ease;
+        transform:translateX(40px);
+        z-index:1;
+    }
+    .screen.active {
+        opacity:1; pointer-events:auto;
+        transform:translateX(0);
+        z-index:10;
+    }
+    .screen.exit-left {
+        opacity:0; transform:translateX(-40px);
+    }
+
+    /* ============================
+       4. HEADER BAR (screens 2-5)
+       ============================ */
+    .header-wrapper {
+        position:sticky; top:0; z-index:50;
+        display:flex; flex-direction:column;
+        background:var(--oscuro);
+    }
+    .topbar {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:0 1.2rem;
+        background:var(--glass-bg);
+        backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+        border-bottom:1px solid var(--glass-border);
+        height:64px; flex-shrink:0;
+    }
+    .topbar-back {
+        width:44px; height:44px; border-radius:50%;
+        border:1px solid var(--borde); background:var(--superficie);
+        color:var(--texto); font-size:1.3rem; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:var(--transition);
+    }
+    .topbar-back:hover { border-color:var(--dorado); color:var(--dorado); }
+    .topbar-logo { height:36px; }
+    .topbar-cart {
+        position:relative; width:44px; height:44px; border-radius:50%;
+        border:1px solid var(--borde); background:var(--superficie);
+        color:var(--texto); font-size:1.3rem; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:var(--transition);
+    }
+    .topbar-cart:hover { border-color:var(--dorado); color:var(--dorado); }
+    .topbar-badge {
+        position:absolute; top:-4px; right:-4px;
+        background:var(--error); color:#fff; font-size:0.7rem; font-weight:800;
+        width:20px; height:20px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center;
+        transform:scale(0); transition:transform 0.25s ease;
+    }
+    .topbar-badge.visible { transform:scale(1); }
+
+    /* ============================
+       5. WELCOME SCREEN
+       ============================ */
+    .welcome {
+        background:radial-gradient(ellipse at 50% 30%, rgba(232,165,0,0.08) 0%, var(--oscuro) 70%);
+        align-items:center; justify-content:center; gap:1rem; padding:2rem;
+        text-align:center; min-height:100vh;
+    }
+    .welcome-logo {
+        width:min(200px, 40vw); height:auto;
+        filter:drop-shadow(0 0 40px rgba(232,165,0,0.3));
+        animation:welcomePulse 3s ease-in-out infinite;
+    }
+    .welcome h1 {
+        font-size:clamp(2rem, 6vw, 3.2rem); font-weight:900;
+        background:linear-gradient(135deg, var(--dorado), var(--dorado-claro));
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        background-clip:text; letter-spacing:2px;
+    }
+    .welcome-sub { color:var(--texto-sec); font-size:1rem; margin-bottom:1rem; }
+    .welcome-club {
+        background:var(--superficie); border:1px solid var(--borde);
+        border-radius:var(--radius-md); padding:0.7rem 1.4rem;
+        font-size:0.85rem; color:var(--dorado); cursor:pointer;
+        transition:var(--transition); margin-bottom:1.5rem;
+    }
+    .welcome-club:hover { background:var(--superficie-elevada); border-color:var(--dorado); }
+    .welcome-btns { display:flex; gap:1rem; width:100%; max-width:500px; margin-top:1rem; }
+    .welcome-btn {
+        flex:1; padding:1.6rem 1rem; border-radius:var(--radius-lg); border:2px solid transparent;
+        font-size:1.1rem; font-weight:700; cursor:pointer; transition:var(--transition);
+        display:flex; flex-direction:column; align-items:center; gap:0.5rem;
+    }
+    .welcome-btn .btn-icon { font-size:2.5rem; }
+    .welcome-btn.primary {
+        background:linear-gradient(135deg, var(--dorado), var(--dorado-oscuro));
+        color:#000; border-color:var(--dorado);
+    }
+    .welcome-btn.primary:hover { transform:translateY(-3px); box-shadow:var(--shadow-glow); }
+    .welcome-btn.secondary {
+        background:var(--superficie); color:var(--dorado); border-color:var(--borde);
+    }
+    .welcome-btn.secondary:hover { border-color:var(--dorado); transform:translateY(-3px); }
+    .welcome-footer {
+        margin-top:auto; padding-top:2rem; padding-bottom:1rem; font-size:0.75rem; color:#555;
+    }
+
+    /* ============================
+       6. MENU SCREEN
+       ============================ */
+    .menu-screen { background:var(--oscuro); }
+    .category-bar {
+        display:flex; gap:0.5rem; padding:0.8rem 1rem;
+        overflow-x:auto; scrollbar-width:none;
+        background:var(--superficie); border-bottom:1px solid var(--borde);
+        flex-shrink:0;
+    }
+    .category-bar::-webkit-scrollbar { display:none; }
+    .cat-tab {
+        flex-shrink:0; padding:0.6rem 1.2rem; border-radius:var(--radius-xl);
+        background:transparent; border:1px solid var(--borde);
+        color:var(--texto-sec); font-size:0.85rem; font-weight:600;
+        cursor:pointer; transition:var(--transition); white-space:nowrap;
+    }
+    .cat-tab.active, .cat-tab:hover {
+        background:var(--dorado); color:#000; border-color:var(--dorado);
+    }
+
+    .menu-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+        gap:1rem; padding:1rem; padding-bottom:120px;
+    }
+
+    .product-card {
+        background:var(--superficie); border-radius:var(--radius-md);
+        border:1px solid var(--borde); overflow:hidden;
+        cursor:pointer; transition:var(--transition);
+        display:flex; flex-direction:column;
+        animation:cardIn 0.4s ease backwards;
+    }
+    .product-card:hover {
+        border-color:var(--dorado); transform:translateY(-4px);
+        box-shadow:var(--shadow-glow);
+    }
+    .product-card.agotado { opacity:0.45; pointer-events:none; }
+
+    .card-visual {
+        height:100px; display:flex; align-items:center; justify-content:center;
+        background:linear-gradient(135deg, var(--superficie-elevada), var(--superficie));
+        font-size:2.8rem; position:relative;
+    }
+    .card-badge {
+        position:absolute; top:6px; right:6px;
+        background:var(--dorado); color:#000;
+        font-size:0.6rem; font-weight:800; padding:2px 7px;
+        border-radius:var(--radius-sm); text-transform:uppercase;
+    }
+    .card-badge.agotado-badge { background:var(--error); color:#fff; }
+
+    .card-body { padding:0.8rem; flex:1; display:flex; flex-direction:column; }
+    .card-name { font-weight:700; font-size:0.9rem; margin-bottom:0.2rem; color:var(--texto); }
+    .card-desc { font-size:0.7rem; color:var(--texto-sec); margin-bottom:auto; line-height:1.3; }
+    .card-prices { margin-top:0.5rem; display:flex; gap:0.6rem; font-weight:700; font-size:0.85rem; }
+    .price-m { color:var(--exito); }
+    .price-xl { color:var(--warning); }
+
+    .menu-loading {
+        text-align:center; padding:4rem 2rem; color:var(--texto-sec);
+    }
+    .menu-loading h2 { color:var(--dorado); font-size:1.3rem; margin-bottom:0.5rem; }
+
+    /* ============================
+       7. CUSTOMIZE SCREEN
+       ============================ */
+    .customize { padding-bottom:120px; }
+    .custom-header {
+        background:linear-gradient(135deg, var(--superficie-elevada), var(--superficie));
+        padding:1.5rem; text-align:center;
+    }
+    .custom-emoji { font-size:4rem; margin-bottom:0.5rem; }
+    .custom-name { font-size:1.4rem; font-weight:800; color:var(--texto); }
+    .custom-desc { font-size:0.85rem; color:var(--texto-sec); margin-top:0.3rem; }
+
+    .custom-section {
+        padding:1rem 1.2rem;
+        border-bottom:1px solid rgba(255,255,255,0.05);
+    }
+    .custom-label {
+        font-size:0.8rem; font-weight:600; color:var(--dorado);
+        text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.7rem;
+    }
+
+    .size-options { display:flex; gap:0.8rem; }
+    .size-btn {
+        flex:1; padding:1rem; border-radius:var(--radius-md);
+        border:2px solid var(--borde); background:var(--superficie);
+        color:var(--texto); cursor:pointer; text-align:center;
+        transition:var(--transition);
+    }
+    .size-btn.selected { border-color:var(--dorado); background:rgba(232,165,0,0.1); }
+    .size-btn:hover { border-color:var(--dorado-claro); }
+    .size-btn .size-label { font-weight:800; font-size:1.2rem; }
+    .size-btn .size-price { font-size:0.85rem; color:var(--exito); margin-top:0.2rem; }
+    .size-btn.disabled { opacity:0.3; pointer-events:none; }
+
+    .stepper {
+        display:flex; align-items:center; gap:0.8rem;
+    }
+    .stepper-btn {
+        width:48px; height:48px; border-radius:50%;
+        border:2px solid var(--borde); background:var(--superficie);
+        color:var(--dorado); font-size:1.4rem; font-weight:800;
+        cursor:pointer; transition:var(--transition);
+        display:flex; align-items:center; justify-content:center;
+    }
+    .stepper-btn:hover { border-color:var(--dorado); background:rgba(232,165,0,0.1); }
+    .stepper-val { font-size:1.5rem; font-weight:800; min-width:40px; text-align:center; }
+
+    .extras-list { display:flex; flex-wrap:wrap; gap:0.6rem; }
+    .extra-chip {
+        padding:0.6rem 1rem; border-radius:var(--radius-xl);
+        border:1px solid var(--borde); background:var(--superficie);
+        color:var(--texto); font-size:0.8rem; cursor:pointer;
+        transition:var(--transition);
+    }
+    .extra-chip.selected { border-color:var(--dorado); background:rgba(232,165,0,0.15); color:var(--dorado); }
+    .extra-chip:hover { border-color:var(--dorado-claro); }
+
+    .custom-notes {
+        width:100%; padding:0.9rem; border-radius:var(--radius-md);
+        border:1px solid var(--borde); background:var(--superficie);
+        color:var(--texto); font-size:0.95rem; font-family:inherit;
+        resize:none; outline:none; transition:var(--transition);
+    }
+    .custom-notes:focus { border-color:var(--dorado); }
+
+    /* ============================
+       8. CART SCREEN
+       ============================ */
+    .cart-screen { background:var(--oscuro); }
+    .cart-empty {
+        text-align:center; padding:4rem 2rem; color:var(--texto-sec);
+    }
+    .cart-empty-icon { font-size:4rem; margin-bottom:1rem; opacity:0.4; }
+    .cart-items { padding:1rem; display:flex; flex-direction:column; gap:0.8rem; padding-bottom:140px; }
+    .cart-item {
+        background:var(--superficie); border:1px solid var(--borde);
+        border-radius:var(--radius-md); padding:1rem;
+        display:flex; align-items:flex-start; gap:0.8rem;
+        animation:cardIn 0.3s ease backwards;
+    }
+    .cart-item-emoji { font-size:2rem; flex-shrink:0; margin-top:0.2rem; }
+    .cart-item-info { flex:1; }
+    .cart-item-name { font-weight:700; font-size:0.95rem; }
+    .cart-item-detail { font-size:0.75rem; color:var(--texto-sec); margin-top:0.2rem; }
+    .cart-item-detail.premio { color:var(--dorado); font-weight:600; }
+    .cart-item-right { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; }
+    .cart-item-price { font-weight:700; color:var(--exito); font-size:1rem; }
+    .cart-item-remove {
+        width:32px; height:32px; border-radius:50%;
+        border:1px solid rgba(255,59,48,0.3); background:rgba(255,59,48,0.1);
+        color:var(--error); font-size:1rem; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:var(--transition);
+    }
+    .cart-item-remove:hover { background:var(--error); color:#fff; }
+
+    .cart-total-section {
+        padding:1rem 1.2rem; border-top:2px solid var(--borde);
+        background:var(--superficie);
+    }
+    .cart-total-row {
+        display:flex; justify-content:space-between; align-items:center;
+        font-size:1.3rem; font-weight:800;
+    }
+    .cart-total-value { color:var(--exito); }
+
+    /* ============================
+       9. CHECKOUT SCREEN
+       ============================ */
+    .checkout { padding:1rem 1.2rem; padding-bottom:120px; }
+    .checkout-section { margin-bottom:1.5rem; }
+    .checkout-title {
+        font-size:0.8rem; font-weight:600; color:var(--dorado);
+        text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.8rem;
+    }
+    .input-group { margin-bottom:1rem; }
+    .input-group label {
+        display:block; font-size:0.85rem; color:var(--texto-sec);
+        margin-bottom:0.4rem; font-weight:500;
+    }
+    .input-group input, .input-group textarea {
+        width:100%; padding:0.9rem 1rem; border-radius:var(--radius-md);
+        border:1px solid var(--borde); background:var(--superficie);
+        color:var(--texto); font-size:1rem; font-family:inherit;
+        outline:none; transition:var(--transition);
+    }
+    .input-group input:focus, .input-group textarea:focus {
+        border-color:var(--dorado); box-shadow:0 0 0 3px rgba(232,165,0,0.1);
+    }
+    .input-group textarea { resize:none; height:70px; }
+
+    .payment-options { display:flex; gap:0.8rem; }
+    .pay-btn {
+        flex:1; padding:1.2rem; border-radius:var(--radius-md);
+        border:2px solid var(--borde); background:var(--superficie);
+        color:var(--texto); cursor:pointer; text-align:center;
+        transition:var(--transition); display:flex; flex-direction:column;
+        align-items:center; gap:0.4rem;
+    }
+    .pay-btn.selected { border-color:var(--dorado); background:rgba(232,165,0,0.1); }
+    .pay-btn:hover { border-color:var(--dorado-claro); }
+    .pay-btn .pay-icon { font-size:2rem; }
+    .pay-btn .pay-label { font-weight:700; font-size:0.85rem; }
+
+    /* ============================
+       10. CONFIRMATION SCREEN
+       ============================ */
+    .confirmation {
+        align-items:center; justify-content:center; text-align:center;
+        padding:2rem; background:var(--oscuro); gap:1rem;
+    }
+    .check-circle {
+        width:100px; height:100px; border-radius:50%;
+        background:linear-gradient(135deg, var(--exito), #2ecc71);
+        display:flex; align-items:center; justify-content:center;
+        font-size:3rem; animation:checkPop 0.6s ease;
+        box-shadow:0 0 40px rgba(76,217,100,0.3);
+    }
+    .confirm-title { font-size:1.6rem; font-weight:800; color:var(--texto); }
+    .confirm-order-id {
+        font-size:2.2rem; font-weight:900;
+        background:linear-gradient(135deg, var(--dorado), var(--dorado-claro));
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        background-clip:text;
+    }
+    .confirm-box {
+        background:var(--superficie); border:1px solid var(--borde);
+        border-radius:var(--radius-md); padding:1.2rem; width:100%;
+        max-width:400px; text-align:left;
+    }
+    .confirm-alias {
+        background:var(--oscuro); border:1px dashed var(--borde);
+        border-radius:var(--radius-sm); padding:0.8rem;
+        text-align:center; font-size:1.3rem; font-weight:800;
+        letter-spacing:2px; color:var(--dorado); margin:0.8rem 0;
+    }
+    .confirm-timer {
+        font-size:0.8rem; color:var(--texto-sec); margin-top:0.5rem;
+    }
+
+    /* ============================
+       11. FLOATING ACTION BAR
+       ============================ */
+    .float-bar {
+        position:fixed; bottom:0; left:0; right:0;
+        background:var(--glass-bg);
+        backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+        border-top:1px solid var(--glass-border);
+        padding:1rem 1.2rem; z-index:100;
+        transform:translateY(100%); transition:transform 0.35s ease;
+        display:flex; align-items:center; gap:1rem;
+    }
+    .float-bar.visible { transform:translateY(0); }
+    .float-bar-info { flex:1; }
+    .float-bar-count { font-size:0.85rem; color:var(--texto-sec); }
+    .float-bar-total { font-size:1.2rem; font-weight:800; color:var(--exito); }
+
+    /* ============================
+       12. BUTTONS
+       ============================ */
+    .btn {
+        padding:1rem 2rem; border-radius:var(--radius-md);
+        border:none; font-family:inherit; font-weight:700;
+        font-size:1rem; cursor:pointer; transition:var(--transition);
+        display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+        text-decoration:none;
+    }
+    .btn-gold {
+        background:linear-gradient(135deg, var(--dorado), var(--dorado-oscuro));
+        color:#000;
+    }
+    .btn-gold:hover { transform:translateY(-2px); box-shadow:var(--shadow-glow); }
+    .btn-gold:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+    .btn-outline {
+        background:transparent; border:2px solid var(--borde); color:var(--texto);
+    }
+    .btn-outline:hover { border-color:var(--dorado); color:var(--dorado); }
+    .btn-green { background:var(--exito); color:#000; }
+    .btn-green:hover { opacity:0.9; transform:translateY(-2px); }
+    .btn-whatsapp { background:#25D366; color:#000; }
+    .btn-whatsapp:hover { opacity:0.9; }
+    .btn-full { width:100%; }
+    .btn-lg { padding:1.2rem 2rem; font-size:1.1rem; }
+
+    /* ============================
+       13. MODALS
+       ============================ */
+    .modal-overlay {
+        position:fixed; inset:0; z-index:200;
+        background:rgba(0,0,0,0.8);
+        display:none; align-items:center; justify-content:center;
+        padding:1rem;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal-box {
+        background:var(--superficie); border:1px solid var(--borde);
+        border-radius:var(--radius-lg); padding:2rem;
+        width:100%; max-width:450px; max-height:85vh; overflow-y:auto;
+        animation:modalIn 0.3s ease;
+        position:relative;
+    }
+    .modal-close {
+        position:absolute; top:1rem; right:1rem;
+        width:36px; height:36px; border-radius:50%;
+        border:1px solid var(--borde); background:var(--superficie-elevada);
+        color:var(--texto-sec); font-size:1.2rem; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:var(--transition);
+    }
+    .modal-close:hover { color:var(--error); border-color:var(--error); }
+    .modal-title {
+        font-size:1.3rem; font-weight:800; color:var(--dorado);
+        margin-bottom:0.5rem; text-align:center;
+    }
+    .modal-sub {
+        font-size:0.85rem; color:var(--texto-sec); text-align:center;
+        margin-bottom:1.5rem;
+    }
+    .modal-input {
+        width:100%; padding:1rem; border-radius:var(--radius-md);
+        border:1px solid var(--borde); background:var(--oscuro);
+        color:var(--texto); font-size:1.2rem; font-weight:700;
+        text-align:center; font-family:inherit; outline:none;
+        transition:var(--transition); margin-bottom:1rem;
+    }
+    .modal-input:focus { border-color:var(--dorado); }
+    .modal-msg { text-align:center; color:var(--dorado); font-weight:600; margin-top:0.5rem; }
+
+    .premio-item {
+        border:1px solid var(--borde); padding:1rem; margin-bottom:0.6rem;
+        border-radius:var(--radius-md); display:flex; align-items:center;
+        justify-content:space-between; transition:var(--transition);
+    }
+    .premio-item:hover { border-color:var(--dorado); }
+    .premio-name { font-weight:700; color:var(--dorado); font-size:0.95rem; }
+    .premio-cost { font-size:0.8rem; color:var(--texto-sec); }
+
+    /* ============================
+       14. ANIMATIONS
+       ============================ */
+    @keyframes welcomePulse {
+        0%, 100% { filter:drop-shadow(0 0 40px rgba(232,165,0,0.3)); }
+        50% { filter:drop-shadow(0 0 60px rgba(232,165,0,0.5)); }
+    }
+    @keyframes cardIn {
+        from { opacity:0; transform:translateY(20px) scale(0.96); }
+        to { opacity:1; transform:translateY(0) scale(1); }
+    }
+    @keyframes modalIn {
+        from { opacity:0; transform:scale(0.92); }
+        to { opacity:1; transform:scale(1); }
+    }
+    @keyframes checkPop {
+        0% { transform:scale(0); opacity:0; }
+        50% { transform:scale(1.2); }
+        100% { transform:scale(1); opacity:1; }
+    }
+    @keyframes spin {
+        to { transform:rotate(360deg); }
+    }
+    .pulse-add {
+        animation:pulseCart 0.4s ease;
+    }
+    @keyframes pulseCart {
+        0%,100% { transform:scale(1); }
+        50% { transform:scale(1.25); }
+    }
+
+    /* ============================
+       15. RESPONSIVE
+       ============================ */
+    @media(min-width:600px) {
+        .menu-grid { grid-template-columns:repeat(3, 1fr); }
+        .welcome-btns { max-width:600px; }
+    }
+    @media(min-width:900px) {
+        .menu-grid { grid-template-columns:repeat(4, 1fr); gap:1.2rem; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--borde); border-radius:4px; }
+
+    /* Veggie note */
+    .veggie-note {
+        grid-column:1 / -1; text-align:center;
+        border:2px dashed var(--dorado); border-radius:var(--radius-md);
+        padding:1rem; color:var(--dorado); font-weight:600;
+        background:rgba(232,165,0,0.05);
+    }
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+     SCREEN 1: BIENVENIDA
+     ============================================ -->
+<div class="screen welcome active" id="screen-welcome">
+    <img src="./logo-alta-burger.png" alt="Alta Burger" class="welcome-logo" id="welcome-logo-img">
+    <h1>ALTA BURGER</h1>
+    <p class="welcome-sub">Las mejores hamburguesas de Neuquén</p>
+
+    <div class="welcome-club" id="welcomeClubBtn" onclick="openLoginModal()">
+        👑 Club Alta Burger — Ingresá para ver tus puntos
+    </div>
+    <div id="welcomeClubInfo" style="display:none; color:var(--exito); font-weight:700; margin-bottom:1rem;">
+        ¡Hola <span id="welcomeClubNombre" style="color:var(--dorado);"></span>! Tenés <span id="welcomeClubPuntos" style="color:var(--exito);">0</span> puntos 🎉
+    </div>
+
+    <p style="color:var(--texto-sec); font-size:0.95rem; margin-bottom:0.5rem;">¿Cómo querés tu pedido?</p>
+    <div class="welcome-btns">
+        <button class="welcome-btn primary" onclick="startOrder('Comer en el local')">
+            <span class="btn-icon">🍽️</span>
+            COMER AQUÍ
+        </button>
+        <button class="welcome-btn secondary" onclick="startOrder('Para llevar')">
+            <span class="btn-icon">🛍️</span>
+            PARA LLEVAR
+        </button>
+    </div>
+
+    <div class="welcome-footer">
+        📍 Pudú 1500, Neuquén · Tel: +54 9 299 690-8502<br>
+        Sistema VICUS
+    </div>
+</div>
+
+<!-- ============================================
+     SCREEN 2: MENÚ
+     ============================================ -->
+<div class="screen menu-screen" id="screen-menu">
+    <div class="header-wrapper">
+        <div class="topbar">
+            <button class="topbar-back" onclick="goBack()" title="Volver">←</button>
+            <img src="./logo-alta-burger.png" alt="Alta Burger" class="topbar-logo">
+            <button class="topbar-cart" onclick="navigateTo('cart')" title="Ver carrito">
+                🛒
+                <span class="topbar-badge" id="cartBadge">0</span>
+            </button>
+        </div>
+
+        <div class="category-bar" id="categoryBar">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <div id="menuGrid" class="menu-grid">
+        <div class="menu-loading">
+            <h2>Cargando menú actualizado... 🍔</h2>
+            <p>Conectando con la cocina de Alta Burger</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================
+     SCREEN 3: PERSONALIZACIÓN
+     ============================================ -->
+<div class="screen customize" id="screen-customize">
+    <div class="topbar">
+        <button class="topbar-back" onclick="goBack()">←</button>
+        <img src="./logo-alta-burger.png" alt="Alta Burger" class="topbar-logo">
+        <button class="topbar-cart" onclick="navigateTo('cart')">
+            🛒 <span class="topbar-badge" id="cartBadge2">0</span>
+        </button>
+    </div>
+
+    <div class="custom-header">
+        <div class="custom-emoji" id="customEmoji">🍔</div>
+        <div class="custom-name" id="customName">Producto</div>
+        <div class="custom-desc" id="customDesc"></div>
+    </div>
+
+    <!-- Tamaño -->
+    <div class="custom-section">
+        <div class="custom-label">Tamaño</div>
+        <div class="size-options" id="sizeOptions">
+            <button class="size-btn selected" data-size="M" onclick="selectSize('M')">
+                <div class="size-label">M</div>
+                <div class="size-price" id="priceM">$0</div>
+            </button>
+            <button class="size-btn" data-size="XL" onclick="selectSize('XL')">
+                <div class="size-label">XL</div>
+                <div class="size-price" id="priceXL">$0</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Medallones -->
+    <div class="custom-section">
+        <div class="custom-label">Medallones</div>
+        <div class="stepper">
+            <button class="stepper-btn" onclick="stepMedallones(-1)">−</button>
+            <span class="stepper-val" id="medallonesVal">1</span>
+            <button class="stepper-btn" onclick="stepMedallones(1)">+</button>
+        </div>
+    </div>
+
+    <!-- Cantidad -->
+    <div class="custom-section">
+        <div class="custom-label">Cantidad</div>
+        <div class="stepper">
+            <button class="stepper-btn" onclick="stepCantidad(-1)">−</button>
+            <span class="stepper-val" id="cantidadVal">1</span>
+            <button class="stepper-btn" onclick="stepCantidad(1)">+</button>
+        </div>
+    </div>
+
+    <!-- Extras -->
+    <div class="custom-section">
+        <div class="custom-label">Agregados / Extras</div>
+        <div class="extras-list" id="extrasList">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Aclaraciones -->
+    <div class="custom-section">
+        <div class="custom-label">Aclaraciones (opcional)</div>
+        <textarea class="custom-notes" id="customNotes" rows="2" placeholder="Ej: Sin mayonesa, sin ketchup..."></textarea>
+    </div>
+
+    <!-- Botón agregar -->
+    <div style="padding:1rem 1.2rem; padding-bottom:2rem;">
+        <button class="btn btn-gold btn-full btn-lg" id="btnAddToCart" onclick="addToCart()">
+            AGREGAR AL PEDIDO — <span id="customTotal">$0</span>
+        </button>
+    </div>
+</div>
+
+<!-- ============================================
+     SCREEN 4: CARRITO
+     ============================================ -->
+<div class="screen cart-screen" id="screen-cart">
+    <div class="topbar">
+        <button class="topbar-back" onclick="goBack()">←</button>
+        <span style="font-weight:700; font-size:1.1rem;">🛒 Tu Pedido</span>
+        <div style="width:44px;"></div>
+    </div>
+
+    <div id="cartContent">
+        <div class="cart-empty" id="cartEmpty">
+            <div class="cart-empty-icon">🛒</div>
+            <h3>Tu carrito está vacío</h3>
+            <p style="color:var(--texto-sec); margin-top:0.5rem;">Agregá productos desde el menú</p>
+            <button class="btn btn-outline" style="margin-top:1.5rem;" onclick="goBack()">← Volver al menú</button>
+        </div>
+        <div class="cart-items" id="cartItems" style="display:none;"></div>
+    </div>
+
+    <!-- Botones inferiores del carrito -->
+    <div class="float-bar" id="cartFloatBar">
+        <div class="float-bar-info">
+            <div class="float-bar-count">Total a pagar</div>
+            <div class="float-bar-total" id="cartTotal">$0</div>
+        </div>
+        <button class="btn btn-gold" onclick="navigateTo('checkout')">PAGAR →</button>
+    </div>
+</div>
+
+<!-- ============================================
+     SCREEN 5: CHECKOUT
+     ============================================ -->
+<div class="screen" id="screen-checkout">
+    <div class="topbar">
+        <button class="topbar-back" onclick="goBack()">←</button>
+        <span style="font-weight:700; font-size:1.1rem;">💳 Finalizar Pedido</span>
+        <div style="width:44px;"></div>
+    </div>
+
+    <div class="checkout">
+        <div class="checkout-section">
+            <div class="checkout-title">Tus datos</div>
+            <div class="input-group">
+                <label for="chk_nombre">Nombre completo *</label>
+                <input type="text" id="chk_nombre" placeholder="Tu nombre" required>
+            </div>
+            <div class="input-group">
+                <label for="chk_telefono">Teléfono *</label>
+                <input type="tel" id="chk_telefono" placeholder="Ej: 2994593155" required>
+            </div>
+        </div>
+
+        <div class="checkout-section">
+            <div class="checkout-title">Método de pago</div>
+            <div class="payment-options">
+                <button class="pay-btn" data-pay="Efectivo en el local" onclick="selectPayment(this)">
+                    <span class="pay-icon">💵</span>
+                    <span class="pay-label">Efectivo</span>
+                </button>
+                <button class="pay-btn" data-pay="Transferencia" onclick="selectPayment(this)">
+                    <span class="pay-icon">📲</span>
+                    <span class="pay-label">Transferencia</span>
+                </button>
+                <button class="pay-btn" data-pay="MercadoPago" onclick="selectPayment(this)">
+                    <span class="pay-icon">💳</span>
+                    <span class="pay-label">MercadoPago</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="checkout-section">
+            <div class="checkout-title">Observaciones (opcional)</div>
+            <div class="input-group">
+                <textarea id="chk_observaciones" placeholder="Ej: Paso a buscar a las 21hs..."></textarea>
+            </div>
+        </div>
+
+        <!-- Resumen rápido -->
+        <div style="background:var(--superficie); border:1px solid var(--borde); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:var(--texto-sec);">Total del pedido</span>
+                <span style="font-size:1.4rem; font-weight:800; color:var(--exito);" id="chkTotal">$0</span>
+            </div>
+        </div>
+
+        <button class="btn btn-gold btn-full btn-lg" id="btnFinalizar" onclick="submitOrder()" disabled>
+            ✅ CONFIRMAR PEDIDO
+        </button>
+    </div>
+</div>
+
+<!-- ============================================
+     SCREEN 6: CONFIRMACIÓN
+     ============================================ -->
+<div class="screen confirmation" id="screen-confirmation">
+    <div class="check-circle">✓</div>
+    <h2 class="confirm-title">¡Pedido enviado!</h2>
+    <div class="confirm-order-id" id="confirmOrderId">#AB-0000</div>
+    <p style="color:var(--texto-sec); font-size:0.9rem;">En breve lo preparamos 🍔</p>
+
+    <!-- Sección transferencia -->
+    <div class="confirm-box" id="confirmTransfer" style="display:none;">
+        <h3 style="color:var(--dorado); font-size:1rem; margin-bottom:0.5rem;">💳 Datos para transferencia</h3>
+        <p style="font-size:0.85rem; color:var(--texto-sec);">Transferí el total de <strong style="color:var(--exito);">$<span id="confirmTransTotal">0</span></strong> al siguiente Alias:</p>
+        <div class="confirm-alias" id="confirmAlias">Alta48</div>
+        <button class="btn btn-whatsapp btn-full" onclick="sendWhatsappReceipt()" style="margin-top:0.5rem;">
+            📲 ENVIAR COMPROBANTE POR WHATSAPP
+        </button>
+    </div>
+
+    <!-- Sección MercadoPago -->
+    <div class="confirm-box" id="confirmMP" style="display:none;">
+        <h3 style="color:var(--dorado); font-size:1rem; margin-bottom:0.5rem;">💳 Pago con MercadoPago</h3>
+        <p style="font-size:0.85rem; color:var(--texto-sec); margin-bottom:0.8rem;">Escaneá el QR o hacé clic en el botón para pagar:</p>
+        <button class="btn btn-full" style="background:#009EE3; color:#fff;" id="btnMPLink" onclick="openMercadoPago()">
+            Ir a MercadoPago →
+        </button>
+    </div>
+
+    <p style="color:var(--texto-sec); font-size:0.8rem; margin-top:0.5rem;">Se descargó tu ticket de comprobante 📄</p>
+
+    <button class="btn btn-gold btn-lg" onclick="resetKiosk()" style="margin-top:1rem;">
+        🔄 NUEVO PEDIDO
+    </button>
+
+    <div class="confirm-timer" id="confirmTimer">Volviendo al inicio en <span id="confirmCountdown">30</span>s</div>
+</div>
+
+<!-- ============================================
+     MODALS
+     ============================================ -->
+<!-- Modal Login Club -->
+<div class="modal-overlay" id="modalLogin">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeLoginModal()">✕</button>
+        <div class="modal-title">👑 Club Alta Burger</div>
+        <div class="modal-sub">Ingresá tu número de teléfono para ver tus puntos acumulados y canjear premios.</div>
+        <input type="number" class="modal-input" id="loginTel" placeholder="Ej: 2994593155">
+        <button class="btn btn-gold btn-full" id="btnLogin" onclick="consultarPuntos()">INGRESAR</button>
+        <div class="modal-msg" id="loginMsg"></div>
+    </div>
+</div>
+
+<!-- Modal Premios -->
+<div class="modal-overlay" id="modalPremios">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closePremiosModal()">✕</button>
+        <div class="modal-title">🎁 Canjear Premio</div>
+        <div class="modal-sub">Elegí un producto para llevártelo GRATIS usando tus puntos.</div>
+        <div id="premiosList"></div>
+    </div>
+</div>
+
+<!-- ============================================
+     JAVASCRIPT
+     ============================================ -->
+<script>
+// ==========================================
+// CONFIG
+// ==========================================
+const WHATSAPP_NUMERO = "5492996908502";
+const ALIAS_CUENTA = "Alta48";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzCr8DssB5pImOCTnwJ0NzjqjuTPw-LSHDjKnOGeXTmvgfzFACF0SjM2XveF7hcoA9D/exec";
+
+// ==========================================
+// STATE
+// ==========================================
+let currentScreen = 'welcome';
+const screenHistory = [];
+let tipoPedido = '';
+
+let catalogoCompleto = [];
+let precios = {};
+let categorias = {};
+let categoriaActiva = '';
+
+const preciosExtras = {
+    "Ninguno": 0,
+    "Papas Extras": 6000,
+    "Papas Solas Grandes": 14000,
+    "Papas con Huevo Grandes": 18000,
+    "Papas con Cheddar y Bacon Grandes": 22000,
+    "Papas con Crema, Verdeo y Jamón Cocido": 18000,
+    "Papas con Queso Azul, Verdeo y Jamón Cocido": 18000,
+    "Cambiar por medallón Veggie": 0
+};
+
+let carrito = [];
+let totalPedido = 0;
+
+// Customize state
+let customProduct = null;
+let customSize = 'M';
+let customMedallones = 1;
+let customCantidad = 1;
+let customExtra = 'Ninguno';
+
+// Club
+let puntosCliente = 0;
+let telefonoCliente = '';
+let nombreCliente = '';
+
+// Confirmation
+let ultimoIdPedido = '';
+let ultimoTotalPedido = 0;
+let ultimoNombreCliente = '';
+let confirmInterval = null;
+let metodoPagoSeleccionado = '';
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function navigateTo(screenId, addToHistory = true) {
+    if (addToHistory && currentScreen) {
+        screenHistory.push(currentScreen);
+    }
+    document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active');
+    });
+    const screen = document.getElementById('screen-' + screenId);
+    screen.classList.add('active');
+    currentScreen = screenId;
+    screen.scrollTop = 0;
+
+    // Toggle global float bar visibility
+    const floatBar = document.getElementById('floatBar');
+    if (floatBar) {
+        if (screenId === 'menu' && (carrito ? carrito.length > 0 : false)) {
+            floatBar.classList.add('visible');
+        } else {
+            floatBar.classList.remove('visible');
+        }
+    }
+}
+
+function goBack() {
+    if (screenHistory.length > 0) {
+        const prev = screenHistory.pop();
+        navigateTo(prev, false);
+    }
+}
+
+// ==========================================
+// WELCOME
+// ==========================================
+function startOrder(tipo) {
+    tipoPedido = tipo;
+    navigateTo('menu');
+}
+
+// ==========================================
+// CATALOG LOADING (JSONP)
+// ==========================================
+function procesarCatalogo(data) {
+    if (data.estado === "OK" && data.catalogo) {
+        catalogoCompleto = data.catalogo;
+        precios = {};
+        categorias = {};
+
+        data.catalogo.forEach(prod => {
+            if (!categorias[prod.categoria]) categorias[prod.categoria] = [];
+            categorias[prod.categoria].push(prod);
+            precios[prod.nombre] = { M: prod.precio_m || 0, XL: prod.precio_xl || 0 };
+        });
+
+        renderCategories();
+        const firstCat = Object.keys(categorias)[0];
+        if (firstCat) selectCategory(firstCat);
+    }
+}
+
+function cargarCatalogo() {
+    var s = document.getElementById('scriptCatalogo');
+    if (s) s.remove();
+    var script = document.createElement('script');
+    script.id = 'scriptCatalogo';
+    script.src = scriptURL + '?callback=procesarCatalogo&t=' + Date.now();
+    document.head.appendChild(script);
+}
+
+function getCategoryEmoji(cat) {
+    const c = cat.toUpperCase();
+    if (c.includes('HAMBURGUESA') || c.includes('BURGER')) return '🍔';
+    if (c.includes('PAPA')) return '🍟';
+    if (c.includes('CERVEZA') || c.includes('PINTA') || c.includes('BIRRA')) return '🍺';
+    if (c.includes('BEBIDA') || c.includes('GASEOSA')) return '🥤';
+    if (c.includes('COMBO') || c.includes('PROMO')) return '🎉';
+    if (c.includes('POSTRE') || c.includes('HELADO')) return '🍦';
+    return '⭐';
+}
+
+function renderCategories() {
+    const bar = document.getElementById('categoryBar');
+    bar.innerHTML = '';
+    Object.keys(categorias).forEach(cat => {
+        const tab = document.createElement('button');
+        tab.className = 'cat-tab';
+        tab.dataset.cat = cat;
+        tab.textContent = getCategoryEmoji(cat) + ' ' + cat;
+        tab.onclick = () => selectCategory(cat);
+        bar.appendChild(tab);
+    });
+}
+
+function selectCategory(cat) {
+    categoriaActiva = cat;
+    document.querySelectorAll('.cat-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.cat === cat);
+    });
+    renderProducts(cat);
+}
+
+function renderProducts(cat) {
+    const grid = document.getElementById('menuGrid');
+    const prods = categorias[cat] || [];
+    let html = '';
+
+    prods.forEach((prod, i) => {
+        const agotado = prod.estado === 'AGOTADO';
+        const emoji = getCategoryEmoji(cat);
+        const delay = i * 0.05;
+
+        html += `
+        <div class="product-card ${agotado ? 'agotado' : ''}" onclick="${agotado ? '' : `openCustomize('${prod.nombre.replace(/'/g, "\\'")}')`}" style="animation-delay:${delay}s">
+            <div class="card-visual">
+                ${emoji}
+                ${prod.tags ? `<span class="card-badge">${prod.tags}</span>` : ''}
+                ${agotado ? '<span class="card-badge agotado-badge">AGOTADO</span>' : ''}
+            </div>
+            <div class="card-body">
+                <div class="card-name">${prod.nombre}</div>
+                ${prod.descripcion ? `<div class="card-desc">${prod.descripcion}</div>` : ''}
+                <div class="card-prices">
+                    <span class="price-m">${prod.precio_xl ? 'M ' : ''}$${(prod.precio_m || 0).toLocaleString('es-AR')}</span>
+                    ${prod.precio_xl ? `<span class="price-xl">XL $${prod.precio_xl.toLocaleString('es-AR')}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    });
+
+    // Nota veggie en la categoría de hamburguesas
+    if (cat.toUpperCase().includes('HAMBURGUESA') || cat.toUpperCase().includes('BURGER')) {
+        html += '<div class="veggie-note">🌱 Hacé tu Burger Veggie — Seleccioná la opción "Cambiar por medallón Veggie" al personalizar</div>';
+    }
+
+    grid.innerHTML = html;
+}
+
+// ==========================================
+// CUSTOMIZATION
+// ==========================================
+function openCustomize(nombre) {
+    const prod = catalogoCompleto.find(p => p.nombre === nombre);
+    if (!prod) return;
+
+    customProduct = prod;
+    customSize = prod.precio_m > 0 ? 'M' : 'XL';
+    customMedallones = 1;
+    customCantidad = 1;
+    customExtra = 'Ninguno';
+
+    // Fill UI
+    document.getElementById('customEmoji').textContent = getCategoryEmoji(prod.categoria);
+    document.getElementById('customName').textContent = prod.nombre;
+    document.getElementById('customDesc').textContent = prod.descripcion || '';
+
+    // Size
+    const sizeM = document.querySelector('[data-size="M"]');
+    const sizeXL = document.querySelector('[data-size="XL"]');
+    document.getElementById('priceM').textContent = prod.precio_m ? '$' + prod.precio_m.toLocaleString('es-AR') : 'N/A';
+    document.getElementById('priceXL').textContent = prod.precio_xl ? '$' + prod.precio_xl.toLocaleString('es-AR') : 'N/A';
+
+    if (!prod.precio_m) { sizeM.classList.add('disabled'); sizeM.classList.remove('selected'); }
+    else { sizeM.classList.remove('disabled'); }
+    if (!prod.precio_xl) { sizeXL.classList.add('disabled'); sizeXL.classList.remove('selected'); }
+    else { sizeXL.classList.remove('disabled'); }
+
+    selectSize(customSize);
+
+    // Medallones & Cantidad
+    document.getElementById('medallonesVal').textContent = '1';
+    document.getElementById('cantidadVal').textContent = '1';
+
+    // Extras
+    const extrasList = document.getElementById('extrasList');
+    let extrasHtml = '';
+    Object.keys(preciosExtras).forEach(key => {
+        const precio = preciosExtras[key];
+        const label = key === 'Ninguno' ? 'Sin extras' : (precio > 0 ? `${key} (+$${precio.toLocaleString('es-AR')})` : key);
+        extrasHtml += `<button class="extra-chip ${key === 'Ninguno' ? 'selected' : ''}" data-extra="${key}" onclick="selectExtra(this, '${key.replace(/'/g, "\\'")}')">${label}</button>`;
+    });
+    extrasList.innerHTML = extrasHtml;
+
+    // Notes
+    document.getElementById('customNotes').value = '';
+
+    updateCustomTotal();
+    navigateTo('customize');
+}
+
+function selectSize(size) {
+    if (!customProduct) return;
+    const p = precios[customProduct.nombre];
+    if (!p || !p[size]) return;
+    customSize = size;
+    document.querySelectorAll('.size-btn').forEach(b => {
+        b.classList.toggle('selected', b.dataset.size === size);
+    });
+    updateCustomTotal();
+}
+
+function stepMedallones(delta) {
+    customMedallones = Math.max(1, Math.min(5, customMedallones + delta));
+    document.getElementById('medallonesVal').textContent = customMedallones;
+}
+
+function stepCantidad(delta) {
+    customCantidad = Math.max(1, Math.min(10, customCantidad + delta));
+    document.getElementById('cantidadVal').textContent = customCantidad;
+    updateCustomTotal();
+}
+
+function selectExtra(el, extra) {
+    document.querySelectorAll('.extra-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    customExtra = extra;
+    updateCustomTotal();
+}
+
+function updateCustomTotal() {
+    if (!customProduct) return;
+    const base = precios[customProduct.nombre]?.[customSize] || 0;
+    const extra = preciosExtras[customExtra] || 0;
+    const total = (base + extra) * customCantidad;
+    document.getElementById('customTotal').textContent = '$' + total.toLocaleString('es-AR');
+}
+
+// ==========================================
+// CART
+// ==========================================
+function addToCart() {
+    if (!customProduct) return;
+
+    const base = precios[customProduct.nombre]?.[customSize] || 0;
+    if (!base) { alert('⚠️ El tamaño ' + customSize + ' no está disponible para ' + customProduct.nombre); return; }
+    const extra = preciosExtras[customExtra] || 0;
+    const subtotal = (base + extra) * customCantidad;
+
+    carrito.push({
+        nombre: customProduct.nombre,
+        categoria: customProduct.categoria,
+        tamano: customSize,
+        medallones: customMedallones,
+        extra: customExtra,
+        aclara: document.getElementById('customNotes').value.trim(),
+        cantidad: customCantidad,
+        subtotal: subtotal
+    });
+
+    // Pulse animation on cart badge
+    document.querySelectorAll('.topbar-badge').forEach(b => {
+        b.classList.add('pulse-add');
+        setTimeout(() => b.classList.remove('pulse-add'), 400);
+    });
+
+    updateCartUI();
+    goBack(); // volver al menú
+}
+
+function removeFromCart(index) {
+    carrito.splice(index, 1);
+    updateCartUI();
+}
+
+function updateCartUI() {
+    // Calculate total
+    totalPedido = carrito.reduce((sum, item) => sum + item.subtotal, 0);
+    const count = carrito.reduce((sum, item) => sum + (item.cantidad || 1), 0);
+
+    // Badges
+    document.querySelectorAll('.topbar-badge').forEach(b => {
+        b.textContent = count;
+        b.classList.toggle('visible', count > 0);
+    });
+
+    // Float bar on menu
+    const floatBar = document.getElementById('floatBar');
+    if (currentScreen === 'menu' && count > 0) {
+        floatBar.classList.add('visible');
+    } else {
+        floatBar.classList.remove('visible');
+    }
+    document.getElementById('floatCount').textContent = count + (count === 1 ? ' producto' : ' productos');
+    document.getElementById('floatTotal').textContent = '$' + totalPedido.toLocaleString('es-AR');
+
+    // Cart screen
+    const cartEmpty = document.getElementById('cartEmpty');
+    const cartItems = document.getElementById('cartItems');
+    const cartFloatBar = document.getElementById('cartFloatBar');
+
+    if (carrito.length === 0) {
+        cartEmpty.style.display = 'block';
+        cartItems.style.display = 'none';
+        cartFloatBar.classList.remove('visible');
+    } else {
+        cartEmpty.style.display = 'none';
+        cartItems.style.display = 'flex';
+        cartFloatBar.classList.add('visible');
+
+        let html = '';
+        carrito.forEach((item, i) => {
+            const emoji = getCategoryEmoji(item.categoria || '');
+            const cantText = item.cantidad > 1 ? `${item.cantidad}x ` : '';
+            let detailHtml = `${item.tamano} · ${item.medallones} med.`;
+            if (item.extra && item.extra !== 'Ninguno') detailHtml += `<br>+ ${item.extra}`;
+            if (item.aclara) detailHtml += `<br><span style="font-style:italic;color:var(--texto-sec);">* ${item.aclara}</span>`;
+            const isPremio = item.esCanje;
+
+            html += `
+            <div class="cart-item" style="animation-delay:${i * 0.05}s">
+                <div class="cart-item-emoji">${emoji}</div>
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${cantText}${item.nombre}</div>
+                    <div class="cart-item-detail ${isPremio ? 'premio' : ''}">${isPremio ? '🎁 PREMIO GRATIS' : detailHtml}</div>
+                </div>
+                <div class="cart-item-right">
+                    <div class="cart-item-price">$${item.subtotal.toLocaleString('es-AR')}</div>
+                    <button class="cart-item-remove" onclick="removeFromCart(${i})">✕</button>
+                </div>
+            </div>`;
+        });
+
+        // Botón premios
+        if (puntosCliente > 0) {
+            let puntosUsados = carrito.filter(i => i.esCanje).reduce((s, i) => s + (i.puntosCobrados || 0), 0);
+            if (puntosCliente - puntosUsados > 0) {
+                html += `<button class="btn btn-gold btn-full" onclick="openPremiosModal()" style="margin-top:0.5rem;">🎁 CANJEAR PUNTOS POR PREMIOS</button>`;
+            }
+        }
+
+        cartItems.innerHTML = html;
+    }
+
+    document.getElementById('cartTotal').textContent = '$' + totalPedido.toLocaleString('es-AR');
+    document.getElementById('chkTotal').textContent = '$' + totalPedido.toLocaleString('es-AR');
+}
+
+// ==========================================
+// CHECKOUT
+// ==========================================
+function selectPayment(el) {
+    document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    metodoPagoSeleccionado = el.dataset.pay;
+    validateCheckout();
+}
+
+function validateCheckout() {
+    const nombre = document.getElementById('chk_nombre').value.trim();
+    const telefono = document.getElementById('chk_telefono').value.trim();
+    const btn = document.getElementById('btnFinalizar');
+    btn.disabled = !(nombre && telefono && metodoPagoSeleccionado && carrito.length > 0);
+}
+
+function submitOrder() {
+    if (carrito.length === 0) return;
+
+    const orderId = "#AB-" + Math.floor(1000 + Math.random() * 9000);
+    const nombre = document.getElementById('chk_nombre').value.trim();
+    const telefono = document.getElementById('chk_telefono').value.trim();
+    const obs = document.getElementById('chk_observaciones').value.trim();
+
+    let totalCantidad = 0;
+    const descripciones = carrito.map(i => {
+        let cant = i.cantidad || 1;
+        totalCantidad += cant;
+        let cantPrefijo = cant > 1 ? `${cant}x ` : '1x ';
+        let det = `${cantPrefijo}${i.nombre} (${i.tamano}) - ${i.medallones} med.`;
+        if (i.extra && i.extra !== 'Ninguno') det += `\n   + Extra: ${i.extra}`;
+        if (i.aclara) det += `\n   + Obs: ${i.aclara}`;
+        if (i.esCanje) det += `\n   🎁 [PREMIO CANJEADO]`;
+        return det;
+    }).join('\n\n');
+
+    const formData = new FormData();
+    formData.append('orderId', orderId);
+    formData.append('nombre', nombre);
+    formData.append('telefono', telefono);
+    formData.append('tipo', tipoPedido);
+    formData.append('producto', descripciones);
+    formData.append('tamano', 'Varios');
+    formData.append('medallones', totalCantidad + ' prod(s)');
+    formData.append('agregados', 'Ver producto');
+
+    let ptosCanjeadosTot = 0;
+    carrito.forEach(i => { if (i.esCanje) ptosCanjeadosTot += (i.puntosCobrados || 0); });
+    formData.append('total_pagado', totalPedido);
+    formData.append('puntos_canjeados', ptosCanjeadosTot);
+
+    let obsFinal = `💰 Pago: ${metodoPagoSeleccionado} | Total: $${totalPedido.toLocaleString('es-AR')}`;
+    if (obs) obsFinal += `\n🗣️ Cliente: ${obs}`;
+    formData.append('observaciones', obsFinal);
+
+    ultimoIdPedido = orderId;
+    ultimoTotalPedido = totalPedido.toLocaleString('es-AR');
+    ultimoNombreCliente = nombre;
+
+    // Disable button
+    const btn = document.getElementById('btnFinalizar');
+    btn.textContent = '⏳ ENVIANDO PEDIDO...';
+    btn.disabled = true;
+
+    fetch(scriptURL, { method: 'POST', body: formData, mode: 'no-cors' })
+    .then(() => {
+        // Download ticket
+        downloadTicket(orderId, obs);
+
+        // Show confirmation
+        showConfirmation();
+    })
+    .catch(err => {
+        alert('Error al enviar: ' + err.message);
+        btn.textContent = '✅ CONFIRMAR PEDIDO';
+        btn.disabled = false;
+    });
+}
+
+function downloadTicket(orderId, obs) {
+    let ticket = `=================================\n`;
+    ticket += `        🍔 ALTA BURGER\n`;
+    ticket += `      TICKET DE PEDIDO\n`;
+    ticket += `=================================\n\n`;
+    ticket += `Nº de Pedido: ${orderId}\n`;
+    ticket += `Fecha: ${new Date().toLocaleString('es-AR')}\n\n`;
+    ticket += `Cliente: ${document.getElementById('chk_nombre').value}\n`;
+    ticket += `Teléfono: ${document.getElementById('chk_telefono').value}\n`;
+    ticket += `Entrega: ${tipoPedido}\n`;
+    ticket += `---------------------------------\n`;
+    ticket += `PRODUCTOS:\n`;
+    carrito.forEach(i => {
+        let cant = i.cantidad || 1;
+        ticket += `- ${cant > 1 ? cant + 'x ' : ''}${i.nombre} (${i.tamano}) x${i.medallones} med.\n`;
+        if (i.extra !== 'Ninguno') ticket += `  Extra: ${i.extra}\n`;
+        if (i.aclara) ticket += `  Aclaración: ${i.aclara}\n`;
+        ticket += `  Subtotal: $${i.subtotal.toLocaleString('es-AR')}\n\n`;
+    });
+    ticket += `---------------------------------\n`;
+    if (obs) ticket += `Observaciones: ${obs}\n---------------------------------\n`;
+    ticket += `TOTAL A PAGAR: $${totalPedido.toLocaleString('es-AR')}\n`;
+    ticket += `=================================\n`;
+    ticket += `¡Gracias por elegirnos!\n`;
+
+    const blob = new Blob([ticket], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AltaBurger_Pedido_${orderId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function showConfirmation() {
+    // Set order ID
+    document.getElementById('confirmOrderId').textContent = ultimoIdPedido;
+
+    // Show payment section
+    document.getElementById('confirmTransfer').style.display = 'none';
+    document.getElementById('confirmMP').style.display = 'none';
+
+    if (metodoPagoSeleccionado === 'Transferencia') {
+        document.getElementById('confirmTransfer').style.display = 'block';
+        document.getElementById('confirmTransTotal').textContent = ultimoTotalPedido;
+        document.getElementById('confirmAlias').textContent = ALIAS_CUENTA;
+    } else if (metodoPagoSeleccionado === 'MercadoPago') {
+        document.getElementById('confirmMP').style.display = 'block';
+    }
+
+    // Navigate
+    screenHistory.length = 0;
+    navigateTo('confirmation', false);
+
+    // Auto-reset timer
+    let countdown = 45;
+    document.getElementById('confirmCountdown').textContent = countdown;
+    if (confirmInterval) clearInterval(confirmInterval);
+    confirmInterval = setInterval(() => {
+        countdown--;
+        document.getElementById('confirmCountdown').textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(confirmInterval);
+            resetKiosk();
+        }
+    }, 1000);
+}
+
+// ==========================================
+// WHATSAPP
+// ==========================================
+function sendWhatsappReceipt() {
+    const msg = `Hola! Soy ${ultimoNombreCliente}, te envío el comprobante de pago de mi pedido ${ultimoIdPedido} por el total de $${ultimoTotalPedido}.`;
+    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ==========================================
+// MERCADOPAGO (ESTRUCTURA PREPARADA)
+// ==========================================
+// TODO: Para activar MercadoPago, configurar ACCESS_TOKEN en el Google Apps Script
+// y crear un endpoint que genere una preferencia de pago.
+// Luego, descomentar la llamada en openMercadoPago().
+
+function openMercadoPago() {
+    // Placeholder: muestra un mensaje indicando que MercadoPago se configurará próximamente.
+    // Cuando tengas el ACCESS_TOKEN de MercadoPago, este botón redirigirá al checkout de MP.
+    alert('🔧 MercadoPago se está configurando.\n\nPor ahora, podés pagar por transferencia al alias: ' + ALIAS_CUENTA);
+}
+
+// ==========================================
+// CLUB ALTA BURGER
+// ==========================================
+function openLoginModal() {
+    document.getElementById('modalLogin').classList.add('open');
+}
+function closeLoginModal() {
+    document.getElementById('modalLogin').classList.remove('open');
+}
+
+function consultarPuntos() {
+    const tel = document.getElementById('loginTel').value;
+    if (!tel) { alert('Ingresá tu número'); return; }
+    document.getElementById('loginMsg').textContent = 'Buscando puntos...';
+    document.getElementById('btnLogin').disabled = true;
+
+    var script = document.createElement('script');
+    script.src = scriptURL + "?action=getPuntos&telefono=" + tel + "&callback=procesarPuntos&t=" + Date.now();
+    document.head.appendChild(script);
+}
+
+function procesarPuntos(data) {
+    document.getElementById('btnLogin').disabled = false;
+    document.getElementById('loginMsg').textContent = '';
+
+    if (data.estado === "OK") {
+        closeLoginModal();
+        telefonoCliente = data.telefono;
+        nombreCliente = data.nombre || '';
+        puntosCliente = Number(data.puntos) || 0;
+
+        // Update welcome
+        document.getElementById('welcomeClubBtn').style.display = 'none';
+        document.getElementById('welcomeClubInfo').style.display = 'block';
+        document.getElementById('welcomeClubNombre').textContent = data.nombre || 'Crack';
+        document.getElementById('welcomeClubPuntos').textContent = puntosCliente;
+
+        // Pre-fill checkout
+        if (data.nombre) document.getElementById('chk_nombre').value = data.nombre;
+        document.getElementById('chk_telefono').value = data.telefono;
+
+        updateCartUI();
+    } else {
+        alert('No se encontraron datos para ese teléfono.');
+    }
+}
+
+function openPremiosModal() {
+    let puntosUsados = carrito.filter(i => i.esCanje).reduce((s, i) => s + (i.puntosCobrados || 0), 0);
+    let puntosDisp = puntosCliente - puntosUsados;
+
+    let html = '';
+    catalogoCompleto.forEach(prod => {
+        if (prod.estado === 'ACTIVO') {
+            if (prod.precio_m > 0 && prod.precio_m <= puntosDisp) {
+                html += `<div class="premio-item">
+                    <div><div class="premio-name">${prod.nombre} (M)</div><div class="premio-cost">${prod.precio_m} puntos</div></div>
+                    <button class="btn btn-green" style="padding:0.5rem 1rem;font-size:0.85rem;" onclick="canjearProducto('${prod.nombre.replace(/'/g, "\\'")}','M',${prod.precio_m})">CANJEAR</button>
+                </div>`;
+            }
+            if (prod.precio_xl > 0 && prod.precio_xl <= puntosDisp) {
+                html += `<div class="premio-item">
+                    <div><div class="premio-name">${prod.nombre} (XL)</div><div class="premio-cost">${prod.precio_xl} puntos</div></div>
+                    <button class="btn btn-green" style="padding:0.5rem 1rem;font-size:0.85rem;" onclick="canjearProducto('${prod.nombre.replace(/'/g, "\\'")}','XL',${prod.precio_xl})">CANJEAR</button>
+                </div>`;
+            }
+        }
+    });
+
+    if (!html) {
+        html = '<p style="text-align:center;color:var(--warning);padding:1rem;">Todavía no te alcanzan los puntos. ¡Seguí acumulando!</p>';
+    }
+
+    document.getElementById('premiosList').innerHTML = html;
+    document.getElementById('modalPremios').classList.add('open');
+}
+
+function closePremiosModal() {
+    document.getElementById('modalPremios').classList.remove('open');
+}
+
+function canjearProducto(nombre, tamano, costoPuntos) {
+    const prod = catalogoCompleto.find(p => p.nombre === nombre);
+    carrito.push({
+        nombre, tamano, medallones: 1, extra: 'Ninguno', aclara: '',
+        cantidad: 1, subtotal: 0, esCanje: true, puntosCobrados: costoPuntos,
+        categoria: prod ? prod.categoria : ''
+    });
+    closePremiosModal();
+    updateCartUI();
+}
+
+// ==========================================
+// PRINTER MODULE (FUTURO)
+// ==========================================
+// Cuando tengas una impresora térmica ESC/POS, implementá el cuerpo de esta función.
+// Opciones:
+//   1. WebUSB API (Chrome): navigator.usb.requestDevice(...)
+//   2. Servidor local Node.js con node-escpos
+//   3. Servicio de impresión via HTTP local (ej: QZ Tray)
+//
+// El objeto ticketData tiene la siguiente estructura:
+// {
+//   orderId: "#AB-1234",
+//   fecha: "26/6/2026 11:30",
+//   cliente: "Juan Pérez",
+//   telefono: "2994593155",
+//   tipo: "Comer en el local",
+//   items: [{ nombre, tamano, medallones, extra, aclara, cantidad, subtotal }],
+//   total: 24500,
+//   metodoPago: "Efectivo"
+// }
+function imprimirTicket(ticketData) {
+    console.log('[PRINTER] Ticket listo para imprimir:', ticketData);
+    // TODO: implementar conexión con impresora ESC/POS
+}
+
+// ==========================================
+// RESET
+// ==========================================
+function resetKiosk() {
+    if (confirmInterval) clearInterval(confirmInterval);
+    carrito = [];
+    totalPedido = 0;
+    tipoPedido = '';
+    customProduct = null;
+    metodoPagoSeleccionado = '';
+    screenHistory.length = 0;
+
+    // Reset form
+    document.getElementById('chk_nombre').value = nombreCliente || '';
+    document.getElementById('chk_telefono').value = telefonoCliente || '';
+    document.getElementById('chk_observaciones').value = '';
+    document.getElementById('btnFinalizar').textContent = '✅ CONFIRMAR PEDIDO';
+    document.getElementById('btnFinalizar').disabled = true;
+    document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+
+    updateCartUI();
+    navigateTo('welcome', false);
+}
+
+// ==========================================
+// INIT
+// ==========================================
+window.addEventListener('load', () => {
+    cargarCatalogo();
+    setInterval(cargarCatalogo, 120000);
+
+    // Checkout validation listeners
+    document.getElementById('chk_nombre').addEventListener('input', validateCheckout);
+    document.getElementById('chk_telefono').addEventListener('input', validateCheckout);
+});
+
+// PWA Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('SW registrado:', reg.scope);
+        }).catch(err => console.log('SW error:', err));
+    });
+}
+</script>
+
+<!-- Floating cart bar -->
+<div class="float-bar" id="floatBar">
+    <div class="float-bar-info">
+        <div class="float-bar-count" id="floatCount">0 productos</div>
+        <div class="float-bar-total" id="floatTotal">$0</div>
+    </div>
+    <button class="btn btn-gold" onclick="navigateTo('cart')">VER PEDIDO →</button>
+</div>
+
+</body>
+</html>
